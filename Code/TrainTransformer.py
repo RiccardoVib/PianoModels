@@ -44,7 +44,7 @@ def train_step(input_language, target_language):
     target_output = target_language[:, 1:]
 
 
-    look_ahead_mask = MaskHandler.look_ahead_mask(tf.shape(target_language)[1])
+    look_ahead_mask = MaskHandler.look_ahead_mask(size=tf.shape(target_language)[1])
     #decoder_target_padding_mask = MaskHandler.padding_mask(target_language)
     #combined_mask = tf.maximum(decoder_target_padding_mask, look_ahead_mask)
 

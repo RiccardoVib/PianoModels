@@ -61,7 +61,7 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
         y_test = data['y_test']
         scaler = data['scaler']
         zero_value = data['zero_value']
-        
+
     #T past values used to predict the next value
     T = x.shape[1] #time window
     D = x.shape[2] #features
@@ -204,8 +204,7 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
             'n_record': n_record,
             'w_length': w_length,
             # 'Train_loss': results.history['loss'],
-            'Val_loss': results.history['val_loss'],
-            #'r_squared': r_squared
+            'Val_loss': results.history['val_loss']
         }
         print(results)
     if ckpt_flag:

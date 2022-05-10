@@ -19,8 +19,8 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     ckpt_flag = kwargs.get('ckpt_flag', False)
     b_size = kwargs.get('b_size', 16)
     learning_rate = kwargs.get('learning_rate', 0.001)
-    encoder_units = kwargs.get('encoder_units', [8, 8])
-    decoder_units = kwargs.get('decoder_units', [8, 8])
+    encoder_units = kwargs.get('encoder_units', [64, 64])
+    decoder_units = kwargs.get('decoder_units', [64, 64])
     if encoder_units[-1] != decoder_units[0]:
         raise ValueError('Final encoder layer must same units as first decoder layer!')
     model_save_dir = kwargs.get('model_save_dir', '../../LSTM_TrainedModels')
@@ -29,10 +29,8 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     drop = kwargs.get('drop', 0.)
     opt_type = kwargs.get('opt_type', 'Adam')
     inference = kwargs.get('inference', False)
-    loss_type = kwargs.get('loss_type', 'mae')
-    shuffle_data = kwargs.get('shuffle_data', False)
+    loss_type = kwargs.get('loss_type', 'mse')
     w_length = kwargs.get('w_length', 0.001)
-    n_record = kwargs.get('n_record', 1)
 
     layers_enc = len(encoder_units)
     layers_dec = len(decoder_units)
@@ -48,24 +46,17 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     n_units_dec = n_units_dec[:-2]
 
     if data is None:
-        x, y, x_val, y_val, x_test, y_test, scaler, zero_value, fs = get_data(data_dir=data_dir, n_record=n_record,
-                                                                              shuffle=shuffle_data, w_length=w_length,
-                                                                              seed=seed)
+        x, y, scaler = get_data(data_dir=data_dir, seed=seed)
     else:
         x = data['x']
         y = data['y']
-        x_val = data['x_val']
-        y_val = data['y_val']
-        x_test = data['x_test']
-        y_test = data['y_test']
         scaler = data['scaler']
-        zero_value = data['zero_value']
 
     #T past values used to predict the next value
-    T = x.shape[1] #time window
-    D = x.shape[2] #conditioning
+    T = y.shape[1] #time window
+    D = 1#x.shape[2] #conditioning
 
-    encoder_inputs = Input(shape=(T,D), name='enc_input')
+    encoder_inputs = Input(shape=(D,D), name='enc_input')
     first_unit_encoder = encoder_units.pop(0)
     if len(encoder_units) > 0:
         last_unit_encoder = encoder_units.pop()
@@ -111,26 +102,35 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
         model.compile(loss='mse', metrics=['mse'], optimizer=opt)
     else:
         raise ValueError('Please pass loss_type as either MAE or MSE')
-
-    # TODO: Currently not loading weights as we only save the best model... Should probably
     callbacks = []
     if ckpt_flag:
-        ckpt_path = os.path.normpath(os.path.join(model_save_dir, save_folder, 'Checkpoints', 'cp-{epoch:04d}.ckpt'))
-        ckpt_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'Checkpoints'))
+        ckpt_path = os.path.normpath(os.path.join(model_save_dir, save_folder, 'Checkpoints', 'best', 'best.ckpt'))
+        ckpt_path_latest = os.path.normpath(
+            os.path.join(model_save_dir, save_folder, 'Checkpoints', 'latest', 'latest.ckpt'))
+        ckpt_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'Checkpoints', 'best'))
+        ckpt_dir_latest = os.path.normpath(os.path.join(model_save_dir, save_folder, 'Checkpoints', 'latest'))
+
         if not os.path.exists(os.path.dirname(ckpt_dir)):
             os.makedirs(os.path.dirname(ckpt_dir))
+        if not os.path.exists(os.path.dirname(ckpt_dir_latest)):
+            os.makedirs(os.path.dirname(ckpt_dir_latest))
 
         ckpt_callback = tf.keras.callbacks.ModelCheckpoint(filepath=ckpt_path, monitor='val_loss', mode='min',
-                                                           save_best_only=True, save_weights_only=True, verbose=1, )
-        callbacks += [ckpt_callback]
-        latest = tf.train.latest_checkpoint(ckpt_dir)
+                                                           save_best_only=True, save_weights_only=True, verbose=1)
+        ckpt_callback_latest = tf.keras.callbacks.ModelCheckpoint(filepath=ckpt_path_latest, monitor='val_loss',
+                                                                  mode='min',
+                                                                  save_best_only=False, save_weights_only=True,
+                                                                  verbose=1)
+        callbacks += [ckpt_callback, ckpt_callback_latest]
+        latest = tf.train.latest_checkpoint(ckpt_dir_latest)
         if latest is not None:
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(latest)
-            start_epoch = int(latest.split('-')[-1].split('.')[0])
-            print('Starting from epoch: ', start_epoch + 1)
+            # start_epoch = int(latest.split('-')[-1].split('.')[0])
+            # print('Starting from epoch: ', start_epoch + 1)
         else:
             print("Initializing random weights.")
+
 
     #log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     #tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
@@ -139,40 +139,21 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     callbacks += [early_stopping_callback]
     #train
     results = model.fit([x, y[:, :-1]], y[:, 1:], batch_size=b_size, epochs=epochs,
-                        validation_data=([x_val, y_val[:, :-1]], y_val[:, 1:]),
+                        validation_data=([x, y[:, :-1]], y[:, 1:]),
                         callbacks=callbacks)
 
-    # #prediction test
-    # predictions = []
-    # #last train input
-    # last_x = x_test[:, :-1]  # DxT array of length T
-    #
-    # while len(predictions) < len(y_test):
-    #     p = model.predict([last_x[0, :], y_test[0, :-1]]) # 1x1 array -> scalar
-    #     predictions.append(p)
-    #     last_x = np.roll(last_x, -1)
-    #
-    #     for i in range(last_x.shape[0]):
-    #         last_x[-1, i] = p
-    #
-    #
-    # plt.plot(y_test, label='forecast target')
-    # plt.plot(predictions, label='forecast prediction')
-    # plt.legend()
-    predictions_test = model.predict([x_test, y_test[:, :-1]], batch_size=b_size)
+    predictions_test = model.predict([x, y[:, :-1]], batch_size=b_size)
 
-    final_model_test_loss = model.evaluate([x_test, y_test[:, :-1]], y_test[:, 1:], batch_size=b_size, verbose=0)
-    y_s = np.reshape(y_test[:, 1:], (-1))
-    y_pred = np.reshape(predictions_test,(-1))
-    r_squared = coefficient_of_determination(y_s[:1600], y_pred[:1600])
-    r2_ = r2_score(y_s[:1600], y_pred[:1600])
+    final_model_test_loss = model.evaluate([x, y[:, :-1]], y[:, 1:], batch_size=b_size, verbose=0)
+    y_s = np.reshape(y[:, 1:], (-1))
+    y_pred = np.reshape(predictions_test, (-1))
 
     if ckpt_flag:
         best = tf.train.latest_checkpoint(ckpt_dir)
         if best is not None:
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(best)
-    test_loss = model.evaluate([x_test, y_test[:, :-1]], y_test[:, 1:], batch_size=b_size, verbose=0)
+    test_loss = model.evaluate([x, y[:, :-1]], y[:, 1:], batch_size=b_size, verbose=0)
     print('Test Loss: ', test_loss)
     if inference:
         results = {}
@@ -184,38 +165,38 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
             'b_size': b_size,
             'loss_type': loss_type,
             'learning_rate': learning_rate,
-            'layers_enc':layers_enc,
-            'layers_dec':layers_dec,
+            'layers_enc': layers_enc,
+            'layers_dec': layers_dec,
             'encoder_units': n_units_enc,
             'decoder_units': n_units_dec,
             'Train_loss': results.history['loss'],
-            'Val_loss': results.history['val_loss'],
-            'r_squared': r2_
+            'Val_loss': results.history['val_loss']
         }
         print(results)
+    if ckpt_flag:
+        with open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.txt'])), 'w') as f:
+            for key, value in results.items():
+                print('\n', key, '  : ', value, file=f)
+            pickle.dump(results, open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.pkl'])), 'wb'))
 
     if generate_wav is not None:
         np.random.seed(seed)
-        gen_indxs = np.random.choice(len(y_test), generate_wav)
-        x_gen = x_test
-        y_gen = y_test
+        x_gen = x
+        y_gen = y
         predictions = model.predict([x_gen, y_gen[:, :-1]])
         print('GenerateWavLoss: ', model.evaluate([x_gen, y_gen[:, :-1]], y_gen[:, 1:], batch_size=b_size, verbose=0))
-        predictions = scaler[0].inverse_transform(predictions)
-        x_gen = scaler[0].inverse_transform(x_gen[:, :, 0])
-        y_gen = scaler[0].inverse_transform(y_gen[:, 1:])
+        predictions = scaler.inverse_transform(predictions)
+        y_gen = scaler.inverse_transform(y_gen[:, 1:])
 
         predictions = predictions.reshape(-1)
         x_gen = x_gen.reshape(-1)
         y_gen = y_gen.reshape(-1)
 
         # Define directories
-        pred_name = 'LSTM_pred.wav'
-        inp_name = 'LSTM_inp.wav'
-        tar_name = 'LSTM_tar.wav'
+        pred_name = 'Seq2Seq_pred.wav'
+        tar_name = 'Seq2Seq_tar.wav'
 
         pred_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', pred_name))
-        inp_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', inp_name))
         tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', tar_name))
 
         if not os.path.exists(os.path.dirname(pred_dir)):
@@ -223,34 +204,26 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
 
         # Save Wav files
         predictions = predictions.astype('int16')
-        x_gen = x_gen.astype('int16')
         y_gen = y_gen.astype('int16')
-        wavfile.write(pred_dir, 48000, predictions)
-        wavfile.write(inp_dir, 48000, x_gen)
-        wavfile.write(tar_dir, 48000, y_gen)
+        wavfile.write(pred_dir, 44100, predictions)
+        wavfile.write(tar_dir, 44100, y_gen)
 
     return results
 
 if __name__ == '__main__':
     data_dir = '../Files'
-    file_data = open(os.path.normpath('/'.join([data_dir, 'data_prepared_w2.pickle'])), 'rb')
-    data = pickle.load(file_data)
     seed = 422
     #start = time.time()
     trainLSTM(data_dir=data_dir,
-              data=data,
               model_save_dir='../../TrainedModels',
-              save_folder='LSTM_enc_dec_Testing',
+              save_folder='Seq2Seq_Testing',
               ckpt_flag=True,
-              b_size=128,
+              b_size=1,
               learning_rate=0.0001,
-              encoder_units=[1],
-              decoder_units=[1],
+              encoder_units=[64],
+              decoder_units=[64],
               epochs=1,
               loss_type='mse',
-              generate_wav=2,
-              n_record=1,
-              w_length=2,
-              shuffle_data=False)
+              generate_wav=2)
     #end = time.time()
     #print(end - start)
