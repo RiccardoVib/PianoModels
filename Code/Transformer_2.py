@@ -16,12 +16,12 @@ class PositionalEncoding(object):
         self._encoding = np.concatenate([sines, cosines], axis=-1)
         self._encoding = self._encoding[np.newaxis, ...]
 
-        def _get_angles(self, position, i, d):
-            angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d))
-            return position * angle_rates
+    def _get_angles(self, position, i, d):
+        angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d))
+        return position * angle_rates
 
-        def get_positional_encoding(self):
-            return tf.cast(self._encoding, dtype=tf.float32)
+    def get_positional_encoding(self):
+        return tf.cast(self._encoding, dtype=tf.float32)
 
 class MaskHandler(object):
     def padding_mask(self, sequence):
@@ -42,7 +42,7 @@ class PreProcessingLayer(Layer):
         # Add embedings and positional encoding
         #self.embedding = Embedding(vocabular_size, self.num_neurons)
         positional_encoding_handler = PositionalEncoding(vocabular_size, self.num_neurons)
-        self.positional_encoding = positional_encoding.get_positional_encoding()
+        self.positional_encoding = positional_encoding_handler.get_positional_encoding()
 
         # Add embedings and positional encoding
         self.dropout = Dropout(0.1)
