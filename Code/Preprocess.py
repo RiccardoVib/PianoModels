@@ -43,6 +43,32 @@ def create_look_ahead_mask(size):
     mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
     return mask  # (seq_len, seq_len)
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Shuffling:
+# ---------------------------------------------------------------------------------------------------------------------
+def get_batches(x, y, z, b_size, shuffle=True, seed=99):
+    np.random.seed(seed)
+    indxs = np.arange(tf.shape(x)[0])
+    if shuffle:
+        np.random.shuffle(indxs)
+
+    def divide_chunks(l, n):
+        # looping until length l
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+
+    x_b, y_b, z_b = [], [], []
+    indxs = divide_chunks(indxs, b_size)
+
+    for indx_batch in indxs:
+        # if len(indx_batch) != b_size:
+        #     continue
+        x_b.append(x[indx_batch])
+        y_b.append(y[indx_batch])
+        z_b.append(z[indx_batch])
+
+    return x_b, y_b, z_b
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Custom Scaler:

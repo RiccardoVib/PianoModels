@@ -22,7 +22,12 @@ learning_rate = Schedule(num_neurons)
 optimizer = Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
 # Initialize transformer
-transformer = Transformer(num_layers, num_neurons, num_hidden_layers, num_heads, max_length, max_length)
+transformer = Transformer(num_layers=num_layers,
+                          num_neurons=num_neurons,
+                          num_hidden_neurons=num_hidden_layers,
+                          num_heads=num_heads,
+                          input_vocabular_size=max_length,
+                          target_vocabular_size=max_length)
 
 
 train_step_signature = [
@@ -44,7 +49,6 @@ def train_step(input_language, target_language):
     target_output = target_language[:, 1:]
 
 
-    look_ahead_mask = MaskHandler.look_ahead_mask(size=tf.shape(target_language)[1])
     #decoder_target_padding_mask = MaskHandler.padding_mask(target_language)
     #combined_mask = tf.maximum(decoder_target_padding_mask, look_ahead_mask)
 

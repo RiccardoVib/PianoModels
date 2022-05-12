@@ -45,18 +45,16 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     n_units_enc = n_units_enc[:-2]
     n_units_dec = n_units_dec[:-2]
 
-    if data is None:
-        x, y, scaler = get_data(data_dir=data_dir, seed=seed)
-    else:
-        x = data['x']
-        y = data['y']
-        scaler = data['scaler']
+    sigs, notes, vels, scaler = get_data(data_dir=data_dir, seed=seed)
 
+    sigs = sigs.reshape(sigs.shape[0], sigs.shape[2])
+    notes = notes.reshape(notes.shape[0])
+    vels = vels.reshape(vels.shape[0])
     #T past values used to predict the next value
-    T = y.shape[1] #time window
-    D = 1#x.shape[2] #conditioning
+    T = sigs.shape[1] #time window
+    D = 2 #conditioning
 
-    encoder_inputs = Input(shape=(D,D), name='enc_input')
+    encoder_inputs = Input(shape=(D,1), name='enc_input')
     first_unit_encoder = encoder_units.pop(0)
     if len(encoder_units) > 0:
         last_unit_encoder = encoder_units.pop()
@@ -138,22 +136,20 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', min_delta=0.00001, patience=20, restore_best_weights=True,                                                             verbose=0)
     callbacks += [early_stopping_callback]
     #train
-    results = model.fit([x, y[:, :-1]], y[:, 1:], batch_size=b_size, epochs=epochs,
-                        validation_data=([x, y[:, :-1]], y[:, 1:]),
+    N = len(notes)
+    cond = np.array([notes, vels]).reshape(168,2)
+    print(cond.shape)
+    results = model.fit([cond[:N//2], sigs[:N//2, :-1]], sigs[:N//2, 1:], batch_size=b_size, epochs=epochs,
+                        validation_data=([cond[N//2+1:(2*N)//3], sigs[N//2+1:(2*N)//3, :-1]], sigs[N//2+1:(2*N)//3, 1:]),
                         callbacks=callbacks)
 
-    predictions_test = model.predict([x, y[:, :-1]], batch_size=b_size)
-
-    final_model_test_loss = model.evaluate([x, y[:, :-1]], y[:, 1:], batch_size=b_size, verbose=0)
-    y_s = np.reshape(y[:, 1:], (-1))
-    y_pred = np.reshape(predictions_test, (-1))
 
     if ckpt_flag:
         best = tf.train.latest_checkpoint(ckpt_dir)
         if best is not None:
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(best)
-    test_loss = model.evaluate([x, y[:, :-1]], y[:, 1:], batch_size=b_size, verbose=0)
+    test_loss = model.evaluate([cond[(2*N)//3+1:], sigs[(2*N)//3+1:, :-1]], sigs[(2*N)//3+1:, 1:], batch_size=b_size, verbose=0)
     print('Test Loss: ', test_loss)
     if inference:
         results = {}
@@ -181,15 +177,13 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
 
     if generate_wav is not None:
         np.random.seed(seed)
-        x_gen = x
-        y_gen = y
-        predictions = model.predict([x_gen, y_gen[:, :-1]])
-        print('GenerateWavLoss: ', model.evaluate([x_gen, y_gen[:, :-1]], y_gen[:, 1:], batch_size=b_size, verbose=0))
-        predictions = scaler.inverse_transform(predictions)
-        y_gen = scaler.inverse_transform(y_gen[:, 1:])
+        predictions = model.predict([cond[(2 * N) // 3 + 1:], sigs[(2 * N) // 3 + 1:, :-1]], batch_size=b_size)
+        print('GenerateWavLoss: ', model.evaluate([cond[(2 * N) // 3 + 1:], sigs[(2 * N) // 3 + 1:, :-1]], sigs[(2 * N) // 3 + 1:, 1:], batch_size=b_size, verbose=0))
+        predictions = scaler[0].inverse_transform(predictions)
+        y_gen = sigs[(2 * N) // 3 + 1:]
+        y_gen = scaler[0].inverse_transform(y_gen[:, 1:])
 
         predictions = predictions.reshape(-1)
-        x_gen = x_gen.reshape(-1)
         y_gen = y_gen.reshape(-1)
 
         # Define directories
@@ -218,7 +212,7 @@ if __name__ == '__main__':
               model_save_dir='../../TrainedModels',
               save_folder='Seq2Seq_Testing',
               ckpt_flag=True,
-              b_size=1,
+              b_size=128,
               learning_rate=0.0001,
               encoder_units=[64],
               decoder_units=[64],

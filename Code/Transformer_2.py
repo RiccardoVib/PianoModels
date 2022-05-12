@@ -24,9 +24,6 @@ class PositionalEncoding(object):
         return tf.cast(self._encoding, dtype=tf.float32)
 
 class MaskHandler(object):
-    def padding_mask(self, sequence):
-        sequence = tf.cast(tf.math.equal(sequence, 0), tf.float32)
-        return sequence[:, tf.newaxis, tf.newaxis, :]
 
     def look_ahead_mask(self, size):
         mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
@@ -62,12 +59,12 @@ class ScaledDotProductAttentionLayer():
     def calculate_output_weights(self, q, k, v, mask):
         qk = tf.matmul(q, k, transpose_b=True)
         dk = tf.cast(tf.shape(k)[-1], tf.float32)
-        scaled_attention = qk / tf.math.sqrt(dk)
+        scaled_attention_logits = qk / tf.math.sqrt(dk)
 
         if mask is not None:
             scaled_attention_logits += (mask * -1e9)
 
-        weights = tf.nn.softmax(scaled_attention, axis=-1)
+        weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
         output = tf.matmul(weights, v)
 
         return output, weights
@@ -222,12 +219,12 @@ class Decoder(Layer):
         self.pre_processing_layer = PreProcessingLayer(num_neurons, vocabular_size)
         self.decoder_layers = [DecoderLayer(num_neurons, num_hidden_neurons, num_heads) for _ in range(num_dec_layers)]
 
-    def call(self, sequence, enconder_output, training, look_ahead_mask, padding_mask):
-        sequence = self.pre_processing_layer(sequence, training, mask)
-
+    def call(self, sequence, enconder_output, training, look_ahead_mask):
+        sequence = self.pre_processing_layer(sequence, training)
+        attention_weights = {}
         for i in range(self.num_dec_layers):
             sequence, attention_weights1, attention_weights2 = self.dec_layers[i](sequence, enconder_output, training,
-                                                                                  look_ahead_mask, padding_mask)
+                                                                                  look_ahead_mask)
 
             attention_weights['decoder_layer{}_attention_weights1'.format(i + 1)] = attention_weights1
             attention_weights['decoder_layer{}_attention_weights2'.format(i + 1)] = attention_weights2
@@ -243,9 +240,12 @@ class Transformer(Model):
         self.decoder = Decoder(num_neurons, num_hidden_neurons, num_heads, target_vocabular_size, num_layers)
         self.linear_layer = Dense(target_vocabular_size)
 
-    def call(self, transformer_input, tar, training, encoder_padding_mask, look_ahead_mask, decoder_padding_mask):
-        encoder_output = self.encoder(transformer_input, training, encoder_padding_mask)
-        decoder_output, attention_weights = self.decoder(tar, encoder_output, training, look_ahead_mask, decoder_padding_mask)
+    def call(self, transformer_input, tar, training):
+        maskHandler = MaskHandler()
+        look_ahead_mask = MaskHandler.look_ahead_mask(maskHandler, size=tf.shape(tar)[1])
+
+        encoder_output = self.encoder(transformer_input, training, look_ahead_mask)
+        decoder_output, attention_weights = self.decoder(tar, encoder_output, training, look_ahead_mask)
         output = self.linear_layer(decoder_output)
 
         return output, attention_weights
