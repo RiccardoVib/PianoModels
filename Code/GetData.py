@@ -64,4 +64,4 @@ if __name__ == '__main__':
 
     signals, notes, vels, scaler = get_data(data_dir=data_dir, seed=422)
 
-    data = {'x': x, 'y': y, 'scaler': scaler}
+    data = {'signals': signals, 'notes': notes, 'vels': vels, 'scaler': scaler}

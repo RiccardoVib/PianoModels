@@ -6,6 +6,8 @@ from Transformer_2 import Transformer, Schedule, MaskHandler
 from tqdm import tqdm
 from GetData import get_data
 
+
+seed=422
 # Initialize parameters
 num_layers = 4
 num_neurons = 128
@@ -13,9 +15,15 @@ num_hidden_layers = 512
 num_heads = 8
 epochs = 1
 b_size = 1
-x, y, scaler = get_data(data_dir='../Files', seed=422)
+sigs, notes, vels, scaler = get_data(data_dir='../Files', seed=seed)
+sigs = sigs.reshape(sigs.shape[0], sigs.shape[2])
+sigs = sigs[:, :100]
+notes = notes.reshape(notes.shape[0])
+vels = vels.reshape(vels.shape[0])
 
-max_length = y.shape[1]
+cond = np.array([notes, vels]).reshape(168, 2)
+
+max_length = sigs.shape[1]
 
 # Initialize learning rate
 learning_rate = Schedule(num_neurons)
@@ -67,8 +75,8 @@ for epoch in tqdm(range(20)):
     val_loss.reset_states()
 
     # Get batches
-    x_batches = x
-    y_batches = y
+    x_batches = cond
+    y_batches = sigs
     # Set-up training progress bar
     n_batch = len(y_batches)
     print("\nepoch {}/{}".format(epoch + 1, epochs))

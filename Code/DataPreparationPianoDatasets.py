@@ -29,13 +29,20 @@ def data_preparation(**kwargs):
             index = np.where(audio != 0)[0][0]
             note_signal = audio[index:int(fs*2.5)]
             audio = audio[index+fs*2:]
-            #t = np.linspace(0, len(note_signal)/fs, num=len(note_signal))
-            #plt.plot(t, note_signal)
+            vel = velocity[velocity_index % len(velocity)]
+
+            t = np.linspace(0, len(note_signal)/fs, num=len(note_signal))
+            plt.plot(t[:75000], note_signal[:75000])
             #plt.show()
-            Notes_collector['signal'].append(note_signal[:84000])
+            nameFig = save_dir + '/Figs/' + str(note) + '_' + str(vel) + '.png'
+            plt.savefig(nameFig)
+            plt.close()
+
+            Notes_collector['signal'].append(note_signal[:75000])
             Notes_collector['note'].append(note)
-            Notes_collector['velocity'].append(velocity[velocity_index%len(velocity)])
-            note = note + 1
+            Notes_collector['velocity'].append(vel)
+            if vel == 120:
+                note = note + 1
             velocity_index = velocity_index + 1
 
             if len(audio) < int(fs*2.5):
