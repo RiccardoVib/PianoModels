@@ -15,7 +15,7 @@ def get_data(data_dir, seed=422):
     # -----------------------------------------------------------------------------------------------------------------
     # Load data
     # -----------------------------------------------------------------------------------------------------------------
-    data = open(os.path.normpath('/'.join([data_dir, 'NotesDataset.pickle'])), 'rb')
+    data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort.pickle'])), 'rb')
 
     Z = pickle.load(data)
     signals = np.array(Z['signal'])

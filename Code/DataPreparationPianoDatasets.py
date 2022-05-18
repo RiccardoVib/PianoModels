@@ -12,7 +12,7 @@ def get_keys_from_value(d, val):
 def data_preparation(**kwargs):
     data_dir = kwargs.get('data_dir', 'C:/Users/riccarsi/Documents/PianoAnalysisProcessed/Piano')
     save_dir = kwargs.get('save_dir', '../Files')
-    file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'PianoDatasetsSingleNoteDuck.wav'])))
+    file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'PianoDatasetsSingleNoteDuckShort.wav'])))
     #L = 48000
 
     Notes_collector = {'signal': [], 'note': [], 'velocity': []}
@@ -30,15 +30,15 @@ def data_preparation(**kwargs):
             note_signal = audio[index:int(fs*2.5)]
             audio = audio[index+fs*2:]
             vel = velocity[velocity_index % len(velocity)]
-
+            limiter = 47000#75000
             t = np.linspace(0, len(note_signal)/fs, num=len(note_signal))
-            plt.plot(t[:75000], note_signal[:75000])
+            plt.plot(t[:limiter], note_signal[:limiter])
             #plt.show()
             nameFig = save_dir + '/Figs/' + str(note) + '_' + str(vel) + '.png'
             plt.savefig(nameFig)
             plt.close()
 
-            Notes_collector['signal'].append(note_signal[:75000])
+            Notes_collector['signal'].append(note_signal[:limiter])
             Notes_collector['note'].append(note)
             Notes_collector['velocity'].append(vel)
             if vel == 120:
@@ -50,7 +50,7 @@ def data_preparation(**kwargs):
         #signal = audio_format.pcm2float(signal)
 
 
-    file_data = open(os.path.normpath('/'.join([save_dir, 'NotesDataset.pickle'])), 'wb')
+    file_data = open(os.path.normpath('/'.join([save_dir, 'NotesDatasetShort.pickle'])), 'wb')
     pickle.dump(Notes_collector, file_data)
     file_data.close()
 if __name__ == '__main__':

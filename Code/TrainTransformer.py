@@ -18,13 +18,14 @@ b_size = 1
 sigs, notes, vels, scaler = get_data(data_dir='../Files', seed=seed)
 sigs = sigs.reshape(sigs.shape[0], sigs.shape[2])
 sigs = sigs[:, :100]
-notes = notes.reshape(notes.shape[0])
-vels = vels.reshape(vels.shape[0])
+notes = notes.reshape(1, notes.shape[0])
+vels = vels.reshape(1, vels.shape[0])
+#168 notes
+cond = np.concatenate((notes, vels), axis=0)
+cond = np.array(cond).T
 
-cond = np.array([notes, vels]).reshape(168, 2)
-
-max_length = sigs.shape[1]
-
+max_length_tar = sigs.shape[1]
+max_length_in = cond.shape[1]
 # Initialize learning rate
 learning_rate = Schedule(num_neurons)
 optimizer = Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
@@ -34,8 +35,8 @@ transformer = Transformer(num_layers=num_layers,
                           num_neurons=num_neurons,
                           num_hidden_neurons=num_hidden_layers,
                           num_heads=num_heads,
-                          input_vocabular_size=max_length,
-                          target_vocabular_size=max_length)
+                          input_vocabular_size=max_length_in,
+                          target_vocabular_size=max_length_tar)
 
 
 train_step_signature = [
@@ -78,13 +79,15 @@ for epoch in tqdm(range(20)):
     x_batches = cond
     y_batches = sigs
     # Set-up training progress bar
-    n_batch = len(y_batches)
+    n_batch = y_batches.shape[0]
     print("\nepoch {}/{}".format(epoch + 1, epochs))
     pb_i = Progbar(n_batch * b_size, stateful_metrics=['Loss: '])
 
     for batch_num in range(len(y_batches)):
-        x_batch = x_batches#[batch_num * b_size:batch_num * b_size + b_size]
-        y_batch = y_batches#[batch_num * b_size:batch_num * b_size + b_size]
+        x_batch = x_batches[batch_num]
+        x_batch = x_batch.reshape(1, x_batch.shape[0], 1)
+        y_batch = y_batches[batch_num]
+        y_batch = y_batch.reshape(1, y_batch.shape[0], 1)
 
     x_batch = tf.constant(x_batch, dtype='float32')
     y_batch = tf.constant(y_batch, dtype='float32')

@@ -39,7 +39,7 @@ class PreProcessingLayer(Layer):
         # Add embedings and positional encoding
         #self.embedding = Embedding(vocabular_size, self.num_neurons)
         positional_encoding_handler = PositionalEncoding(vocabular_size, self.num_neurons)
-        self.positional_encoding = positional_encoding_handler.get_positional_encoding()
+        self.positional_encoding = positional_encoding_handler.get_positional_encoding() #1xSeqLengx128
 
         # Add embedings and positional encoding
         self.dropout = Dropout(0.1)
@@ -144,7 +144,7 @@ class EncoderLayer(Layer):
         self.feed_forward_layer, self.feed_forward_dropout, self.feed_forward_normalization = \
             build_feed_forward_layers(num_neurons, num_hidden_neurons)
 
-    def call(self, sequence, training, mask):
+    def call(self, sequence, training, mask=None):
         # Calculate attention output
         attnention_output, _ = self.multi_head_attention_layer(sequence, sequence, sequence, mask)
         attnention_output = self.attention_dropout(attnention_output, training=training)
@@ -202,10 +202,10 @@ class Encoder(Layer):
         self.pre_processing_layer = PreProcessingLayer(num_neurons, vocabular_size)
         self.encoder_layers = [EncoderLayer(num_neurons, num_hidden_neurons, num_heads) for _ in range(num_enc_layers)]
 
-    def call(self, sequence, training, mask):
-        sequence = self.pre_processing_layer(sequence, training, mask)
+    def call(self, sequence, training, mask=None):
+        sequence = self.pre_processing_layer(sequence, training, None)
         for i in range(self.num_enc_layers):
-            sequence = self.encoder_layers[i](sequence, training, mask)
+            sequence = self.encoder_layers[i](sequence, training, None)
 
         return sequence
 
@@ -220,11 +220,11 @@ class Decoder(Layer):
         self.decoder_layers = [DecoderLayer(num_neurons, num_hidden_neurons, num_heads) for _ in range(num_dec_layers)]
 
     def call(self, sequence, enconder_output, training, look_ahead_mask):
-        sequence = self.pre_processing_layer(sequence, training)
+        sequence = self.pre_processing_layer(sequence, training, look_ahead_mask)
         attention_weights = {}
         for i in range(self.num_dec_layers):
-            sequence, attention_weights1, attention_weights2 = self.dec_layers[i](sequence, enconder_output, training,
-                                                                                  look_ahead_mask)
+            sequence, attention_weights1, attention_weights2 = self.decoder_layers[i](sequence, enconder_output, training,
+                                                                                  look_ahead_mask,look_ahead_mask)
 
             attention_weights['decoder_layer{}_attention_weights1'.format(i + 1)] = attention_weights1
             attention_weights['decoder_layer{}_attention_weights2'.format(i + 1)] = attention_weights2
