@@ -12,7 +12,6 @@ from scipy.io import wavfile
 from tensorflow.keras.layers import Input, Dense, LSTM
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam, SGD
-from sklearn.metrics import r2_score
 import pickle
 #
 def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
@@ -216,7 +215,7 @@ if __name__ == '__main__':
               learning_rate=0.0001,
               encoder_units=[64],
               decoder_units=[64],
-              epochs=1,
+              epochs=100,
               loss_type='mse',
               generate_wav=2)
     #end = time.time()
