@@ -6,7 +6,7 @@ from Transformer_2 import Transformer, Schedule, MaskHandler
 from tqdm import tqdm
 from GetData import get_data
 
-
+#
 seed=422
 # Initialize parameters
 num_layers = 4

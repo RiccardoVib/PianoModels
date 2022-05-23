@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 import os
 import glob
 import pickle
-import audio_format
 
 def get_keys_from_value(d, val):
     return [k for k, v in d.items() if v == val]
 
 def data_preparation(**kwargs):
-    data_dir = kwargs.get('data_dir', 'C:/Users/riccarsi/Documents/PianoAnalysisProcessed/Piano')
+    #data_dir = kwargs.get('data_dir', 'C:/Users/riccarsi/Documents/PianoAnalysisProcessed/Piano')
+    data_dir = kwargs.get('data_dir', '../Files')
+
     save_dir = kwargs.get('save_dir', '../Files')
     file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'PianoDatasetsSingleNoteDuckShort.wav'])))
     #L = 48000
@@ -53,6 +54,7 @@ def data_preparation(**kwargs):
     file_data = open(os.path.normpath('/'.join([save_dir, 'NotesDatasetShort.pickle'])), 'wb')
     pickle.dump(Notes_collector, file_data)
     file_data.close()
+
 if __name__ == '__main__':
 
     data_preparation()

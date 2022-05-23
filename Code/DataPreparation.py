@@ -1,10 +1,7 @@
-import numpy as np
 from scipy.io import wavfile
-from scipy import signal
 import os
 import glob
 import pickle
-import audio_format
 
 def get_keys_from_value(d, val):
     return [k for k, v in d.items() if v == val]

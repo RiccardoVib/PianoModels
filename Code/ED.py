@@ -79,7 +79,7 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
 
     encoder_states = [state_h, state_c]
 
-    decoder_inputs = Input(shape=(1,1), name='dec_input')
+    decoder_inputs = Input(shape=(1,D), name='dec_input')
     first_unit_decoder = decoder_units.pop(0)
     if len(decoder_units) > 0:
         last_unit_decoder = decoder_units.pop()
@@ -114,7 +114,6 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     else:
         raise ValueError('Please pass loss_type as either MAE or MSE')
 
-    # TODO: Currently not loading weights as we only save the best model... Should probably
     callbacks = []
     if ckpt_flag:
         ckpt_path = os.path.normpath(os.path.join(model_save_dir, save_folder, 'Checkpoints', 'best', 'best.ckpt'))
@@ -148,41 +147,18 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
 
     #train
     if not inference:
-        results = model.fit([x[:,:-1,:], x[:,-1, 0]], y[:, -1], batch_size=b_size, epochs=epochs, verbose=0,
-                            validation_data=([x_val[:,:-1,:], x_val[:,-1, 0]], y_val[:, -1]),
+        results = model.fit([x[:,:-1,:], x[:,-1, :]], y[:, -1], batch_size=b_size, epochs=epochs, verbose=0,
+                            validation_data=([x_val[:,:-1,:], x_val[:,-1, :]], y_val[:, -1]),
                             callbacks=callbacks)
 
-    # #prediction test
-    # predictions = []
-    # #last train input
-    # last_x = x_test[:, :-1]  # DxT array of length T
-    #
-    # while len(predictions) < len(y_test):
-    #     p = model.predict([last_x[0, :], y_test[0, :-1]]) # 1x1 array -> scalar
-    #     predictions.append(p)
-    #     last_x = np.roll(last_x, -1)
-    #
-    #     for i in range(last_x.shape[0]):
-    #         last_x[-1, i] = p
-    #
-    #
-    # plt.plot(y_test, label='forecast target')
-    # plt.plot(predictions, label='forecast prediction')
-    # plt.legend()
-    predictions_test = model.predict([x_test[:, :-1, :], x_test[:, -1, 0].reshape(-1,1)], batch_size=b_size)
+    predictions_test = model.predict([x_test[:, :-1, :], x_test[:, -1, 0].reshape(-1,D)], batch_size=b_size)
 
-    final_model_test_loss = model.evaluate([x_test[:,:-1,:], x_test[:,-1, 0].reshape(-1,1)], y_test[:, -1], batch_size=b_size, verbose=0)
-    #y_s = np.reshape(y_test[:, 1:], (-1))
-    #y_pred = np.reshape(predictions_test,(-1))
-    #r_squared = coefficient_of_determination(y_s[:1600], y_pred[:1600])
-    #r2_ = r2_score(y_s[:1600], y_pred[:1600])
-    
     if ckpt_flag:
         best = tf.train.latest_checkpoint(ckpt_dir)
         if best is not None:
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(best)
-    test_loss = model.evaluate([x_test[:,:-1,:], x_test[:, -1,  0].reshape(-1,1)], y_test[:, -1], batch_size=b_size, verbose=0)
+    test_loss = model.evaluate([x_test[:,:-1,:], x_test[:, -1,  :].reshape(-1,D)], y_test[:, -1], batch_size=b_size, verbose=0)
     print('Test Loss: ', test_loss)
     if inference:
         results = {}
@@ -201,7 +177,6 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
             'layers_dec': layers_dec,
             'n_units_enc': n_units_enc,
             'n_units_dec': n_units_dec,
-            'n_record': n_record,
             'w_length': w_length,
             # 'Train_loss': results.history['loss'],
             'Val_loss': results.history['val_loss']

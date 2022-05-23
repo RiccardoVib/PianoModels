@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from Preprocess import positional_encoding, create_look_ahead_mask
 
-
+#
 def scaled_dot_product_attention(q, k, v, mask):
     """Calculate the attention weights.
       q, k, v must have matching leading dimensions.

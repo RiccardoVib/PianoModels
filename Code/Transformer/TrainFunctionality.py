@@ -1,30 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from statistics import mean
-from keras import backend as K
-
-#
-def custom_loss_function(y_true, y_pred):
-    mse = tf.keras.metrics.mean_squared_error(y_true, y_pred)
-    #squared_difference = tf.square(tf.abs(y_true - y_pred))
-    #loss = squared_difference/tf.square(tf.abs(y_true))
-    squared_difference_dc = tf.square(tf.abs(y_true - y_pred))/(y_true.shape[0])
-    mse_dc = squared_difference_dc/(tf.square(tf.abs(y_true))/y_true.shape[0])
-    return mse+mse_dc#tf.reduce_mean(squared_difference, axis=-1)
-
-
-def ESR_loss_function(y_true, y_pred):
-    return tf.divide(K.sum(K.square(y_pred - y_true)), K.sum(K.square(y_true)))
-
-def FFT_loss_function(y_true, y_pred):
-    Y_true = tf.signal.rfft(tf.reshape(y_true, [-1]))
-    Y_pred = tf.signal.rfft(tf.reshape(y_pred, [-1]))
-    return tf.keras.metrics.mean_absolute_error(tf.math.real(Y_true), tf.math.real(Y_pred))
-
-
-def root_mean_squared_error(y_true, y_pred):
-    return K.sqrt(K.mean(K.square(y_pred - y_true)))
+from matplotlib.ticker import FormatStrFormatter
+import copy
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
@@ -85,23 +63,6 @@ def accuracy_function(real, pred):
     mask = tf.cast(mask, dtype=tf.float32)
     return tf.reduce_sum(accuracies)/tf.reduce_sum(mask)
 
-def squared_error(ys_orig, ys_pred):
-    return sum((ys_pred - ys_orig) * (ys_pred - ys_orig))
-
-
-def coefficient_of_determination(ys_orig, ys_pred):
-    y_mean_line = [mean(ys_orig) for y in ys_orig]
-    squared_error_regr = squared_error(ys_orig, ys_pred)
-    squared_error_y_mean = squared_error(ys_orig, y_mean_line)
-    return 1 - (squared_error_regr / squared_error_y_mean)
-
-
-def error_to_signal_ratio(ys_orig, ys_pred):
-    num, den = 0,0
-    for n in range(len(ys_orig)):
-        num += (ys_orig[n] - ys_pred[n])**2
-        den += ys_orig[n]**2
-    return np.divide(num,den)
 
 class PlotLossesSame:
     def __init__(self, start_epoch, **kwargs):

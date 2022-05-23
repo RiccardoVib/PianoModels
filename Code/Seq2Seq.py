@@ -6,7 +6,6 @@ import numpy as np
 import os
 import time
 import tensorflow as tf
-from TrainFunctionality import coefficient_of_determination
 from GetData import get_data
 from scipy.io import wavfile
 from tensorflow.keras.layers import Input, Dense, LSTM
