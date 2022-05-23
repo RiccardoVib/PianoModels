@@ -30,6 +30,10 @@ def get_data(data_dir, window, seed=422):
     # Scale data to be within (0, 1)
     # -----------------------------------------------------------------------------------------------------------------
 
+    scaler =  my_scaler(feature_range=(-1, 1))
+    scaler.fit(signals)
+    signals = scaler.transform(signals)
+
     scaler_note = my_scaler()
     scaler_note.fit(notes)
     notes = scaler_note.transform(notes)
@@ -38,7 +42,7 @@ def get_data(data_dir, window, seed=422):
     scaler_vel.fit(vels)
     vels = scaler_vel.transform(vels)
 
-    scaler = [scaler_note, scaler_vel]
+    scaler = [scaler, scaler_note, scaler_vel]
 
     # -----------------------------------------------------------------------------------------------------------------
     # Shuffle indexing matrix and and split into test, train validation
@@ -54,9 +58,9 @@ def get_data(data_dir, window, seed=422):
 
     for i in range(n_train):
         for t in range(signals.shape[1] // window):
-            inp_temp = np.array([signals[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+            inp_temp = np.array([sine[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
-            tar_temp = np.array(sine[i, t * window:t * window + window])
+            tar_temp = np.array(signals[i, t * window:t * window + window])
             all_tar.append(tar_temp.T)
 
     all_inp = np.array(all_inp)
@@ -71,9 +75,9 @@ def get_data(data_dir, window, seed=422):
     for i in range(n_train, n_train + n_val):
         for t in range(signals.shape[1] // window):
             inp_temp = np.array(
-                [signals[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+                [sine[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
-            tar_temp = np.array(sine[i, t * window:t * window + window])
+            tar_temp = np.array(signals[i, t * window:t * window + window])
             all_tar.append(tar_temp.T)
 
     all_inp = np.array(all_inp)
@@ -88,9 +92,9 @@ def get_data(data_dir, window, seed=422):
     for i in range(n_train + n_val, N):
         for t in range(signals.shape[1] // window):
             inp_temp = np.array(
-                [signals[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+                [sine[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
-            tar_temp = np.array(sine[i, t * window:t * window + window])
+            tar_temp = np.array(signals[i, t * window:t * window + window])
             all_tar.append(tar_temp.T)
 
     all_inp = np.array(all_inp)

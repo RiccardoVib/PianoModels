@@ -4,7 +4,7 @@ import numpy as np
 import scipy.fftpack as sf
 import matplotlib.pyplot as plt
 
-data_dir =  '../Files'
+data_dir = '../Files'
 data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort.pickle'])), 'rb')
 fs = 44100
 
@@ -37,5 +37,12 @@ vels_ = np.array(Z['velocity'])
 #     plt.show()
 
 
-data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_1.pickle'])), 'wb')
+data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_1.pickle'])), 'rb')
 Z = pickle.load(data)
+y_val = np.array(Z['y_val'])
+x_val = np.array(Z['x_val'])
+x_val = x_val[:,:,0]
+t = np.linspace(0, len(x_val.reshape(-1)) / fs, num=len(x_val.reshape(-1)))
+plt.plot(x_val.reshape(-1))
+plt.plot(y_val.reshape(-1))
+plt.show()
