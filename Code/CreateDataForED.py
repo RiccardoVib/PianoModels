@@ -37,9 +37,9 @@ def data_create_sins(**kwargs):
         samples = np.linspace(0, index/fs, index, endpoint=False)
 
         vel = vels[i]/120
-        vel = vel/2
+        vel = vel/4
         sine = vel * np.sin(np.pi * maximumFrequency[0] * samples)
-        #sine *= 32767
+        sine *= 32767
         #sine *= 1000
         sine = np.pad(sine, (0, signals[i].shape[0] - index))
 
@@ -56,7 +56,7 @@ def data_create_sins(**kwargs):
         #
         # plt.plot(sine)
         # plt.show()
-        #sine = np.int16(sine)
+        sine = np.int16(sine)
         Notes_collector_sine['signal'].append(sine)
         Notes_collector_sine['note'].append(notes[i])
         Notes_collector_sine['velocity'].append(vels[i])

@@ -17,8 +17,6 @@ data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort_Sines.pickle
 
 Z = pickle.load(data)
 sine = np.array(Z['signal'])
-notes_ = np.array(Z['note'])
-vels_ = np.array(Z['velocity'])
 #
 # for i in range(notes.shape[0]):
 #
@@ -39,10 +37,10 @@ vels_ = np.array(Z['velocity'])
 
 data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_1.pickle'])), 'rb')
 Z = pickle.load(data)
-y_val = np.array(Z['y_val'])
-x_val = np.array(Z['x_val'])
-x_val = x_val[:,:,0]
-t = np.linspace(0, len(x_val.reshape(-1)) / fs, num=len(x_val.reshape(-1)))
-plt.plot(x_val.reshape(-1))
-plt.plot(y_val.reshape(-1))
+y = np.array(Z['y'])
+x = np.array(Z['x'])
+x = x[:,:,0]
+t = np.linspace(0, len(x.reshape(-1)) / fs, num=len(x.reshape(-1)))
+plt.plot(x.reshape(-1))
+plt.plot(y.reshape(-1))
 plt.show()

@@ -29,10 +29,12 @@ def get_data(data_dir, window, seed=422):
     # -----------------------------------------------------------------------------------------------------------------
     # Scale data to be within (0, 1)
     # -----------------------------------------------------------------------------------------------------------------
+    Z = np.array([signals, sine])
 
     scaler =  my_scaler(feature_range=(-1, 1))
-    scaler.fit(signals)
+    scaler.fit(Z)
     signals = scaler.transform(signals)
+    sine = scaler.transform(sine)
 
     scaler_note = my_scaler()
     scaler_note.fit(notes)
