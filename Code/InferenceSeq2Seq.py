@@ -183,8 +183,8 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
     # Save Wav files
     predictions = predictions.astype('int16')
     y_gen = y_gen.astype('int16')
-    wavfile.write(pred_dir, 48000, predictions)
-    wavfile.write(tar_dir, 48000, y_gen)
+    wavfile.write(pred_dir, 44100, predictions)
+    wavfile.write(tar_dir, 44100, y_gen)
 
 
 
