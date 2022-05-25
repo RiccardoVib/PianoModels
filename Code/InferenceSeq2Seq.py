@@ -29,7 +29,7 @@ def predict_sequence(encoder_model, decoder_model, input_seq, n_steps, output_di
     target_seq[0, 0, 0] = last_prediction
     # collect predictions
     output = []
-    for t in range(n_steps):
+    for t in range(10):#n_steps):
         # predict next char
         yhat, h, c = decoder_model.predict([target_seq] + state)
         # store prediction
@@ -160,31 +160,31 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
         #predictions.append(out)
         #end = time.time()
         #print(end - start)
-
-        predictions = np.concatenate((predictions, out), axis=0)
+        out = np.array(out)
+        predictions = np.concatenate((np.array(predictions).reshape(-1), out.reshape(-1)), axis=0)
         predictions = np.array(predictions)
 
-    predictions = scaler[0].inverse_transform(predictions)
-    y_gen = scaler[0].inverse_transform(y_gen)
+        predictions = scaler[0].inverse_transform(predictions)
+        y_gen = scaler[0].inverse_transform(y_gen)
 
-    predictions = predictions.reshape(-1)
-    y_gen = y_gen.reshape(-1)
+        predictions = predictions.reshape(-1)
+        y_gen = y_gen.reshape(-1)
 
-    # Define directories
-    pred_name = 'LSTM_pred.wav'
-    tar_name = 'LSTM_tar.wav'
+        # Define directories
+        pred_name = 'LSTM_pred.wav'
+        tar_name = 'LSTM_tar.wav'
 
-    pred_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', pred_name))
-    tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', tar_name))
+        pred_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', pred_name))
+        tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', tar_name))
 
-    if not os.path.exists(os.path.dirname(pred_dir)):
-        os.makedirs(os.path.dirname(pred_dir))
+        if not os.path.exists(os.path.dirname(pred_dir)):
+            os.makedirs(os.path.dirname(pred_dir))
 
-    # Save Wav files
-    predictions = predictions.astype('int16')
-    y_gen = y_gen.astype('int16')
-    wavfile.write(pred_dir, 44100, predictions)
-    wavfile.write(tar_dir, 44100, y_gen)
+        # Save Wav files
+        predictions = predictions.astype('int16')
+        y_gen = y_gen.astype('int16')
+        wavfile.write(pred_dir, 44100, predictions)
+        wavfile.write(tar_dir, 44100, y_gen)
 
 
 
