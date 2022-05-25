@@ -40,7 +40,7 @@ def predict_sequence(encoder_model, decoder_model, input_seq, n_steps, output_di
         target_seq = yhat
         last_prediction = yhat[0, 0, :]
 
-    output = np.array(output)
+    #output = np.array(output)
     return output, last_prediction
 
 
@@ -130,8 +130,8 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
         if best is not None:
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(best)
-    test_loss = model.evaluate([cond[(2*N)//3+1:], sigs[(2*N)//3+1:, :-1]], sigs[(2*N)//3+1:, 1:], batch_size=b_size, verbose=0)
-    print('Test Loss: ', test_loss)
+    #test_loss = model.evaluate([cond[(2*N)//3+1:], sigs[(2*N)//3+1:, :-1]], sigs[(2*N)//3+1:, 1:], batch_size=b_size, verbose=0)
+    #print('Test Loss: ', test_loss)
 
     
     #INFERENCE
@@ -154,14 +154,14 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
         last_prediction = y_gen[0]
         predictions = [last_prediction]
         output_dim = y_gen.shape[0] - 1
-        for b in range(y_gen.shape[0]):
-            out, last_prediction = predict_sequence(encoder_model, decoder_model, x_gen, y_gen.shape[0],
-                                                    output_dim, last_prediction, 1)
-            predictions.append(out)
-            #end = time.time()
-            #print(end - start)
 
-            predictions.append(out)
+        out, last_prediction = predict_sequence(encoder_model, decoder_model, x_gen, y_gen.shape[0],
+                                                    output_dim, last_prediction, 1)
+        #predictions.append(out)
+        #end = time.time()
+        #print(end - start)
+
+        predictions = np.concatenate((predictions, out), axis=0)
         predictions = np.array(predictions)
 
     predictions = scaler[0].inverse_transform(predictions)

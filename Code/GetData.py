@@ -53,7 +53,7 @@ def get_data(data_dir, seed=422):
     #     sigs_train = signals[:N//2]
     #     notes_train = notes[:N//2]
     #     vels_train
-
+    #signals = np.array(signals)[:, :10]
     return np.array(signals), np.array(notes), np.array(vels), scaler
 
 if __name__ == '__main__':
