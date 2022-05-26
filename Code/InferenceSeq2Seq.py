@@ -40,7 +40,7 @@ def predict_sequence(encoder_model, decoder_model, input_seq, n_steps, output_di
         target_seq = yhat
         last_prediction = yhat[0, 0, :]
 
-    #output = np.array(output)
+    output = np.array(output)
     return output, last_prediction
 
 
@@ -160,7 +160,7 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
         #predictions.append(out)
         #end = time.time()
         #print(end - start)
-        out = np.array(out)
+        #out = np.array(out)
         predictions = np.concatenate((np.array(predictions).reshape(-1), out.reshape(-1)), axis=0)
         predictions = np.array(predictions)
 
