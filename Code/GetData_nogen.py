@@ -111,10 +111,10 @@ if __name__ == '__main__':
 
     data_dir = '../Files'
 
-    x, y, x_val, y_val, x_test, y_test, scaler = get_data(data_dir=data_dir, window=1)
+    x, y, x_val, y_val, x_test, y_test, scaler = get_data(data_dir=data_dir, window=16)
 
     data = {'x': x, 'y': y, 'x_val': x_val, 'y_val': y_val, 'x_test': x_test, 'y_test': y_test , 'scaler': scaler}
 
-    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_1.pickle'])), 'wb')
+    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16.pickle'])), 'wb')
     pickle.dump(data, file_data)
     file_data.close()
