@@ -3,6 +3,8 @@ import os
 import numpy as np
 import scipy.fftpack as sf
 import matplotlib.pyplot as plt
+import glob
+from scipy.io import wavfile
 
 data_dir = '../Files'
 data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort.pickle'])), 'rb')
@@ -35,12 +37,26 @@ sine = np.array(Z['signal'])
 #     plt.show()
 
 
-data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_1.pickle'])), 'rb')
-Z = pickle.load(data)
-y = np.array(Z['y'])
-x = np.array(Z['x'])
-x = x[:,:,0]
-t = np.linspace(0, len(x.reshape(-1)) / fs, num=len(x.reshape(-1)))
-plt.plot(x.reshape(-1))
-plt.plot(y.reshape(-1))
-plt.show()
+# data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_1.pickle'])), 'rb')
+# Z = pickle.load(data)
+# y = np.array(Z['y'])
+# x = np.array(Z['x'])
+# x = x[:,:,0]
+# t = np.linspace(0, len(x.reshape(-1)) / fs, num=len(x.reshape(-1)))
+# plt.plot(x.reshape(-1))
+# plt.plot(y.reshape(-1))
+# plt.show()
+
+
+#---------
+
+
+data_dir = '../Files'
+file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'LSTM_tar.wav'])))
+
+for file in file_dirs:
+    fs, audio = wavfile.read(file)
+
+    t = np.linspace(0, len(audio) / fs, num=len(audio))
+    plt.plot(audio)
+    plt.show()
