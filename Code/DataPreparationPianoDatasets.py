@@ -31,7 +31,7 @@ def data_preparation(**kwargs):
             note_signal = audio[index:int(fs*2.5)]
             audio = audio[index+fs*2:]
             vel = velocity[velocity_index % len(velocity)]
-            limiter = 15000#47000#75000
+            limiter = 6500#47000#75000
             t = np.linspace(0, len(note_signal), num=len(note_signal))
             plt.plot(t[:limiter], note_signal[:limiter])
             #plt.show()

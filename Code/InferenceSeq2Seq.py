@@ -130,9 +130,6 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
         if best is not None:
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(best)
-    #test_loss = model.evaluate([cond[(2*N)//3+1:], sigs[(2*N)//3+1:, :-1]], sigs[(2*N)//3+1:, 1:], batch_size=b_size, verbose=0)
-    #print('Test Loss: ', test_loss)
-
     
     #INFERENCE
     # define inference encoder
@@ -149,42 +146,42 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
     x_gen = cond[(2*N)//3+2]
     y_gen = sigs[(2*N)//3+2]
 
-    if inference:
-        #start = time.time()
-        last_prediction = y_gen[0]
-        predictions = [last_prediction]
-        output_dim = y_gen.shape[0] - 1
+    #start = time.time()
+    last_prediction = y_gen[0]
+    predictions = [last_prediction]
+    output_dim = y_gen.shape[0] - 1
 
-        out, last_prediction = predict_sequence(encoder_model, decoder_model, x_gen, y_gen.shape[0],
+    out, last_prediction = predict_sequence(encoder_model, decoder_model, x_gen, y_gen.shape[0],
                                                     output_dim, last_prediction, 1)
-        #predictions.append(out)
-        #end = time.time()
-        #print(end - start)
-        #out = np.array(out)
-        predictions = np.concatenate((np.array(predictions).reshape(-1), out.reshape(-1)), axis=0)
-        predictions = np.array(predictions)
+    #predictions.append(out)
+    #end = time.time()
+    #print(end - start)
+    #out = np.array(out)
+    predictions = np.concatenate((np.array(predictions).reshape(-1), out.reshape(-1)), axis=0)
+    predictions = np.array(predictions)
 
-        predictions = scaler[0].inverse_transform(predictions)
-        y_gen = scaler[0].inverse_transform(y_gen)
+    predictions = scaler[0].inverse_transform(predictions)
+    y_gen = scaler[0].inverse_transform(y_gen)
 
-        predictions = predictions.reshape(-1)
-        y_gen = y_gen.reshape(-1)
+    predictions = predictions.reshape(-1)
+    y_gen = y_gen.reshape(-1)
 
-        # Define directories
-        pred_name = 'LSTM_pred.wav'
-        tar_name = 'LSTM_tar.wav'
+    # Define directories
+    pred_name = 'Inference_pred.wav'
+    tar_name = 'Inference_tar.wav'
 
-        pred_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', pred_name))
-        tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', tar_name))
+    pred_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', pred_name))
+    tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', tar_name))
 
-        if not os.path.exists(os.path.dirname(pred_dir)):
-            os.makedirs(os.path.dirname(pred_dir))
+    if not os.path.exists(os.path.dirname(pred_dir)):
+        os.makedirs(os.path.dirname(pred_dir))
 
-        # Save Wav files
-        predictions = predictions.astype('int16')
-        y_gen = y_gen.astype('int16')
-        wavfile.write(pred_dir, 44100, predictions)
-        wavfile.write(tar_dir, 44100, y_gen)
+    # Save Wav files
+    predictions = predictions.astype('int16')
+    y_gen = y_gen.astype('int16')
+    wavfile.write(pred_dir, 44100, predictions)
+    wavfile.write(tar_dir, 44100, y_gen)
+    print("Completed")
 
 
 
@@ -199,7 +196,6 @@ if __name__ == '__main__':
               b_size=128,
               learning_rate=0.0001,
               encoder_units=[64],
-              decoder_units=[64],
-              inference=True)
+              decoder_units=[64])
     #end = time.time()
     #print(end - start)
