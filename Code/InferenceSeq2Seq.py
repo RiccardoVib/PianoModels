@@ -73,8 +73,15 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
     
     #encoder
     encoder_inputs = Input(shape=(D,1), name='enc_input')
-
-    outputs, state_h, state_c = LSTM(unit_encoder, return_state=True, name='LSTM_En')(encoder_inputs)
+    first_unit_encoder = encoder_units.pop(0)
+    if len(encoder_units) > 0:
+        last_unit_encoder = encoder_units.pop()
+        outputs = LSTM(first_unit_encoder, return_sequences=True, name='LSTM_En0')(encoder_inputs)
+        for i, unit in enumerate(encoder_units):
+            outputs = LSTM(unit, return_sequences=True, name='LSTM_En' + str(i + 1))(outputs)
+        outputs, state_h, state_c = LSTM(unit_encoder, return_state=True, name='LSTM_En')(encoder_inputs)
+    else:
+        outputs, state_h, state_c = LSTM(first_unit_encoder, return_state=True, name='LSTM_En')(encoder_inputs)
 
     encoder_states = [state_h, state_c]   
     
@@ -82,8 +89,14 @@ def inferenceLSTM(data_dir, seed=422, **kwargs):
     decoder_inputs = Input(shape=(T-1,1), name='dec_input')
 
     decoder_lstm = LSTM(unit_decoder, return_sequences=True, return_state=True, name='LSTM_De', dropout=drop)
-    outputs, _, _ = decoder_lstm(decoder_inputs, initial_state=encoder_states)
-    
+
+    #outputs, _, _ = decoder_lstm(decoder_inputs, initial_state=encoder_states)
+
+    outputs_, _, _ = decoder_lstm(decoder_inputs, initial_state=encoder_states)
+
+    decoder_lstm_2 = LSTM(unit_decoder, return_sequences=True, return_state=True, name='LSTM_De_2', dropout=drop)
+    outputs, _, _ = decoder_lstm_2(outputs_, initial_state=encoder_states)
+
     if drop != 0.:
         outputs = tf.keras.layers.Dropout(drop, name='DropLayer')(outputs)
     decoder_dense = Dense(num_decoder_tokens, activation='sigmoid', name='DenseLay')

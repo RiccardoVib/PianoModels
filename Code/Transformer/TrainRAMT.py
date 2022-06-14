@@ -110,8 +110,8 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
 
     @tf.function
     def val_step(inp, tar, testing=False):
-        tar_inp = tar[:, :-1]
-        tar_real = tar[:, 1:]
+        tar_inp = tar[:, :-1, :]
+        tar_real = tar[:, 1:, :]
 
         predictions, attn_weights = transformer([inp, tar_inp], training=False)
 
@@ -140,8 +140,8 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
         graph_signature = [
             #tf.TensorSpec((None, Z_shape[1], Z_shape[2]), tf.float32),
             #tf.TensorSpec((None, Z_shape[1], Z_shape[2]), tf.float32)
-            tf.TensorSpec((None, 2), tf.float32),
-            tf.TensorSpec((None, Z_shape[1]), tf.float32)
+            tf.TensorSpec((None, 2, 1), tf.float32),
+            tf.TensorSpec((None, Z_shape[1], 1), tf.float32)
         ]
 
         @tf.function(input_signature=graph_signature)
@@ -167,9 +167,13 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
                 loaded = tf.saved_model.load(save_model_latest)
 
             # Need to make a single prediction for the model as it needs to compile:
-            transformer([tf.constant(Z[x[:2]], dtype='float32'),
-                         tf.constant(Z[y[:2]][:, :-1, :], dtype='float32')],
+            x_ = cond[N // 2]
+            y_ = sigs[N // 2]
+            # Need to make a single prediction for the model as it needs to compile:
+            transformer([tf.constant(x_.reshape(1, cond.shape[1], 1), dtype='float32'),
+                         tf.constant(y_.reshape(1, sigs.shape[1], 1)[:, :-1, :], dtype='float32')],
                         training=False)
+
             for i in range(len(transformer.variables)):
                 if transformer.variables[i].name != loaded.all_variables[i].name:
                     assert ValueError('Cannot load model, due to incompatible loaded and model...')
@@ -232,8 +236,8 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
         #x_batches, y_batches = get_batches(x_val, y_val, b_size=b_size, shuffle=True, seed=epoch)
 
         for batch_num in range(N//2+1, (2*N)//3):
-            x_batch = cond[batch_num]
-            y_batch = sigs[batch_num]
+            x_batch = cond[batch_num].reshape(1, cond.shape[1], 1)
+            y_batch = sigs[batch_num].reshape(1, sigs.shape[1], 1)
 
             x_batch = tf.constant(x_batch, dtype='float32')
             y_batch = tf.constant(y_batch, dtype='float32')
@@ -344,8 +348,8 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
             x_ = cond[N//2]
             y_ = sigs[N//2]
             # Need to make a single prediction for the model as it needs to compile:
-            transformer([tf.constant(x_, dtype='float32'),
-                         tf.constant(y_[:, :-1, :], dtype='float32')],
+            transformer([tf.constant(x_.reshape(1, cond.shape[1], 1), dtype='float32'),
+                         tf.constant(y_.reshape(1, sigs.shape[1], 1)[:, :-1, :], dtype='float32')],
                         training=False)
             for i in range(len(transformer.variables)):
                 if transformer.variables[i].name != loaded.all_variables[i].name:
@@ -361,8 +365,8 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
     # Get batches
 
     for batch_num in range((2*N)//3+1, N):
-        x_batch = cond[batch_num]
-        y_batch = sigs[batch_num]
+        x_batch = cond[batch_num].reshape(1, cond.shape[1], 1)
+        y_batch = sigs[batch_num].reshape(1, sigs.shape[1], 1)
 
         x_batch = tf.constant(x_batch, dtype='float32')
         y_batch = tf.constant(y_batch, dtype='float32')
@@ -407,74 +411,47 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
     # -----------------------------------------------------------------------------------------------------------------
     if generate_wav is not None:
         np.random.seed(333)
-        gen_indxs = np.random.choice(len(N), generate_wav)
-        x_batch = cond[gen_indxs]
-        y_batch = sigs[gen_indxs]
+        gen_indxs = N//2#np.random.choice(N, generate_wav)
+        x_gen = cond[gen_indxs]
+        y_gen = sigs[gen_indxs]
         predictions, _ = transformer([
-            tf.constant(x_gen, dtype='float32'),
-            tf.constant(y_gen[:, :-1, :], dtype='float32')],
+            tf.constant(x_gen.reshape(1, cond.shape[1], 1), dtype='float32'),
+            tf.constant(y_gen.reshape(1, sigs.shape[1], 1)[:, :-1, :], dtype='float32')],
             training=False)
         predictions = predictions.numpy()
-        losses = [np.sum(threshold_loss(tf.cast(lab, tf.float32), tf.cast(pred, tf.float32))) for (lab, pred) in zip(y_gen[:,1:,:], predictions)]
-        predictions = scaler.inverse_transform(predictions)
-        x_gen = scaler.inverse_transform(x_gen)
-        y_gen = scaler.inverse_transform(y_gen)
-        for i, indx in enumerate(gen_indxs):
-            # Define directories
-            pred_name = 'x' + str(x_test[gen_indxs][i]) + '_y' + str(y_test[gen_indxs][i]) + '_pred.wav'
-            inp_name = 'x' + str(x_test[gen_indxs][i]) + '_y' + str(y_test[gen_indxs][i]) + '_inp.wav'
-            tar_name = 'x' + str(x_test[gen_indxs][i]) + '_y' + str(y_test[gen_indxs][i]) + '_tar.wav'
+        #losses = [np.sum(threshold_loss(tf.cast(lab, tf.float32), tf.cast(pred, tf.float32))) for (lab, pred) in zip(y_gen.reshape(1, sigs.shape[1], 1)[:, 1:, :], predictions)]
+        predictions = scaler[0].inverse_transform(predictions)
 
-            pred_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', pred_name))
-            inp_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', inp_name))
-            tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', tar_name))
+        y_gen = scaler[0].inverse_transform(y_gen)
 
-            if not os.path.exists(os.path.dirname(pred_dir)):
-                os.makedirs(os.path.dirname(pred_dir))
+        pred_name = 'Transf_pred.wav'
+        tar_name = 'Transf_tar.wav'
 
-            # Resample
-            pred_i = pred_i.astype('int16')
-            inp_i = inp_i.astype('int16')
-            tar_i = tar_i.astype('int16')
+        pred_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', pred_name))
+        tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', tar_name))
 
-            # Save Wav files
-            wavfile.write(pred_dir, 44100, pred_i)
-            wavfile.write(inp_dir, 44100, inp_i)
-            wavfile.write(tar_dir, 44100, tar_i)
+        if not os.path.exists(os.path.dirname(pred_dir)):
+            os.makedirs(os.path.dirname(pred_dir))
+
+        # Resample
+        predictions = predictions.astype('int16')
+        y_gen = y_gen.astype('int16')
+
+        # Save Wav files
+        wavfile.write(pred_dir, 44100, predictions)
+        wavfile.write(tar_dir, 44100, y_gen)
 
     return results
 
-    # # TODO: Sort this out for proper training (i.e. not for a single sample as here... )
-    # predictions, _ = transformer([x_batch, y_batch[:, :-1, :]], training=False)
-    # #print(loss_fn(y_batch[:, 1:], predictions).numpy())
-    #
-    # # checking one prediction
-    # #for i in range(len(x_batch[0,0,:])):
-    #  #   predictions, _ = transformer([x_batch[:,:,:i+1], y_batch[:, -1, :i+1]], training=False)
-    #   #  prediction[i] = predictions[0]
-    #
-    # predictions = predictions[0].numpy()
-    # predictions = scaler.inverse_transform(predictions)
-    # predictions = tf.squeeze(predictions).numpy()       # Remove dimensions of size == 1.
-    #
-    #
-    # # To perform inverse STFT we need to have the same frequency bins as were produced by the original STFT (i.e.
-    # # before removing higher frequencies), we therefore pad these values with zeroes:
-    # #predictions = np.concatenate([predictions, np.zeros((predictions.shape[0], predictions.shape[-1]))], axis=-1)
-    #
-    # _, prediction = signal.istft(predictions.T, nperseg=4410, nfft=5120)     # Inverse STFT
-    # prediction = signal.resample_poly(prediction, up=5, down=1)
-    # prediction = prediction.astype('int16')   # Convert the data to int16 values.
-    # wavfile.write(r'prediction.wav', 44100, prediction)
 
 if __name__ == '__main__':
     data_dir = '../../Files'
     train_RAMT(
         data_dir=data_dir,
         model_save_dir=r'../../../TrainedModels',
-        save_folder='Transformer_TestingLoss',
+        save_folder='Transformer_Testing',
         ckpt_flag=True,
-        plot_progress=True,
+        plot_progress=False,
         loss_type='mse',
         b_size=128,
         learning_rate=0.0001,
