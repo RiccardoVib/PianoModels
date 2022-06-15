@@ -6,7 +6,7 @@ import numpy as np
 import os
 import time
 import tensorflow as tf
-from GetData import get_data
+from GetDataPiano import get_data
 from scipy.io import wavfile
 from tensorflow.keras.layers import Input, Dense, LSTM
 from tensorflow.keras.models import Model

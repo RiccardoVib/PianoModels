@@ -26,6 +26,10 @@ def FFT_loss_function(y_true, y_pred):
 def root_mean_squared_error(y_true, y_pred):
     return K.sqrt(K.mean(K.square(y_pred - y_true)))
 
+def combinedLoss(y_true, y_pred):
+    return ESR_loss_function(y_true, y_pred) + tf.keras.metrics.mean_squared_error(y_true, y_pred)
+
+
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
         super(CustomSchedule, self).__init__()

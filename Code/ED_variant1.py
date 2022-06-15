@@ -16,7 +16,7 @@ from tensorflow.keras.optimizers import Adam, SGD
 import pickle
 
 
-# MODEL 3
+# MODEL 4: enc 15 past, dec present + cond
 def trainED(data_dir, epochs, seed=422, data=None, **kwargs):
     ckpt_flag = kwargs.get('ckpt_flag', False)
     b_size = kwargs.get('b_size', 32)
@@ -60,7 +60,7 @@ def trainED(data_dir, epochs, seed=422, data=None, **kwargs):
     T = x.shape[1]  # time window
     D = x.shape[2]  # features
 
-    encoder_inputs = Input(shape=(T - 1, D), name='enc_input')
+    encoder_inputs = Input(shape=(T - 1, 1), name='enc_input')
     first_unit_encoder = encoder_units.pop(0)
     if len(encoder_units) > 0:
         last_unit_encoder = encoder_units.pop()
@@ -73,7 +73,7 @@ def trainED(data_dir, epochs, seed=422, data=None, **kwargs):
 
     encoder_states = [state_h, state_c]
 
-    decoder_inputs = Input(shape=(1, 1), name='dec_input')
+    decoder_inputs = Input(shape=(1, D), name='dec_input')
     first_unit_decoder = decoder_units.pop(0)
     if len(decoder_units) > 0:
         last_unit_decoder = decoder_units.pop()
@@ -146,18 +146,18 @@ def trainED(data_dir, epochs, seed=422, data=None, **kwargs):
 
     # train
     if not inference:
-        results = model.fit([x[:, :-1, :], x[:, -1, 0]], y[:, -1], batch_size=b_size, epochs=epochs, verbose=0,
-                            validation_data=([x_val[:, :-1, :], x_val[:, -1, 0]], y_val[:, -1]),
+        results = model.fit([x[:, :-1, 0], x[:, -1, :]], y[:, -1], batch_size=b_size, epochs=epochs, verbose=0,
+                            validation_data=([x_val[:, :-1, 0], x_val[:, -1, :]], y_val[:, -1]),
                             callbacks=callbacks)
 
-    predictions_test = model.predict([x_test[:, :-1, :], x_test[:, -1, 0].reshape(-1, 1)], batch_size=b_size)
+    predictions_test = model.predict([x_test[:, :-1, 0], x_test[:, -1, :]], batch_size=b_size)
 
     if ckpt_flag:
         best = tf.train.latest_checkpoint(ckpt_dir)
         if best is not None:
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(best)
-    test_loss = model.evaluate([x_test[:, :-1, :], x_test[:, -1, 0].reshape(-1, 1)], y_test[:, -1], batch_size=b_size,
+    test_loss = model.evaluate([x_test[:, :-1, 0], x_test[:, -1, :]], y_test[:, -1], batch_size=b_size,
                                verbose=0)
     print('Test Loss: ', test_loss)
     if inference:
@@ -189,7 +189,7 @@ def trainED(data_dir, epochs, seed=422, data=None, **kwargs):
             pickle.dump(results, open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.pkl'])), 'wb'))
 
     if inference:
-        out = model.predict([x_test[:, :-1, :], x_test[:, -1, 0].reshape(-1, 1)])
+        out = model.predict([x_test[:, :-1, 0], x_test[:, -1, :]])
 
         predictions = np.array(predictions)
         predictions = scaler[0].inverse_transform(predictions)
@@ -220,9 +220,9 @@ def trainED(data_dir, epochs, seed=422, data=None, **kwargs):
         np.random.seed(seed)
         x_gen = x_test
         y_gen = y_test
-        predictions = model.predict([x_gen[:, :-1, :], x_gen[:, -1, 0].reshape(-1, 1)])
+        predictions = model.predict([x_gen[:, :-1, 0], x_gen[:, -1, :]])
         print('GenerateWavLoss: ',
-              model.evaluate([x_gen[:, :-1, :], x_gen[:, -1, 0].reshape(-1, 1)], y_gen[:, -1], batch_size=b_size,
+              model.evaluate([x_gen[:, :-1, 0], x_gen[:, -1, :]], y_gen[:, -1], batch_size=b_size,
                              verbose=0))
         predictions = scaler[0].inverse_transform(predictions)
         x_gen = scaler[0].inverse_transform(x_gen[:, -1, 0])

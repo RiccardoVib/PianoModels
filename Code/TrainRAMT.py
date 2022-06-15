@@ -1,4 +1,4 @@
-from GetData import get_data
+from GetDataPiano import get_data
 import os
 import tensorflow as tf
 import numpy as np

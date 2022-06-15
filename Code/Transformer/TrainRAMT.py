@@ -7,7 +7,7 @@ from scipy.io import wavfile
 from Transformer import Transformer
 from TrainFunctionality import CustomSchedule, PlotLossesSubPlots
 from tensorflow.keras.utils import Progbar
-from Code.GetData import get_data
+from Code.GetDataPiano import get_data
 
 def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
     # Get the data:
