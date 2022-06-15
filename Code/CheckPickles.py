@@ -49,7 +49,13 @@ sine = np.array(Z['signal'])
 
 
 #---------
+data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'rb')
+Z = pickle.load(data)
+kont = np.array(Z['x_test'])[:, :, 0]
+real = np.array(Z['y_test'])
 
+plt.plot(kont[:,-1].reshape(-1))
+plt.show()
 
 data_dir = '../Files'
 file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'LSTM_tar.wav'])))

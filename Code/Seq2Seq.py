@@ -52,7 +52,7 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
     T = sigs.shape[1] #time window
     D = 2 #conditioning
 
-    encoder_inputs = Input(shape=(D,1), name='enc_input')
+    encoder_inputs = Input(shape=(D, 1), name='enc_input')
     first_unit_encoder = encoder_units.pop(0)
     if len(encoder_units) > 0:
         last_unit_encoder = encoder_units.pop()
@@ -65,7 +65,7 @@ def trainLSTM(data_dir, epochs, seed=422, data=None, **kwargs):
 
     encoder_states = [state_h, state_c]
 
-    decoder_inputs = Input(shape=(T-1,1), name='dec_input')
+    decoder_inputs = Input(shape=(T-1, 1), name='dec_input')
     first_unit_decoder = decoder_units.pop(0)
     if len(decoder_units) > 0:
         last_unit_decoder = decoder_units.pop()
