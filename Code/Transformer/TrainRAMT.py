@@ -419,9 +419,7 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
             tf.constant(y_gen.reshape(1, sigs.shape[1], 1)[:, :-1, :], dtype='float32')],
             training=False)
         predictions = predictions.numpy()
-        #losses = [np.sum(threshold_loss(tf.cast(lab, tf.float32), tf.cast(pred, tf.float32))) for (lab, pred) in zip(y_gen.reshape(1, sigs.shape[1], 1)[:, 1:, :], predictions)]
-        predictions = scaler[0].inverse_transform(predictions)
-
+        predictions = scaler[0].inverse_transform(predictions[:, :, 0])
         y_gen = scaler[0].inverse_transform(y_gen)
 
         pred_name = 'Transf_pred.wav'
