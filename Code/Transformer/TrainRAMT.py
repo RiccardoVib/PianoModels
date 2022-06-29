@@ -409,17 +409,18 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
     # -----------------------------------------------------------------------------------------------------------------
     # Save some Wav-file Predictions (from test set):
     # -----------------------------------------------------------------------------------------------------------------
-    if generate_wav is not None:
+    if generate_wav is not None and not inference_flag:
         np.random.seed(333)
-        gen_indxs = N//2#np.random.choice(N, generate_wav)
+        gen_indxs = N // 2  # np.random.choice(N, generate_wav)
         x_gen = cond[gen_indxs]
         y_gen = sigs[gen_indxs]
         predictions, _ = transformer([
             tf.constant(x_gen.reshape(1, cond.shape[1], 1), dtype='float32'),
             tf.constant(y_gen.reshape(1, sigs.shape[1], 1)[:, :-1, :], dtype='float32')],
             training=False)
-        predictions = predictions.numpy()
-        predictions = scaler[0].inverse_transform(predictions[:, :, 0])
+        predictions = predictions[:, :, 0].numpy()
+        predictions = scaler[0].inverse_transform(predictions.T)
+
         y_gen = scaler[0].inverse_transform(y_gen)
 
         pred_name = 'Transf_pred.wav'
@@ -432,12 +433,35 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
             os.makedirs(os.path.dirname(pred_dir))
 
         # Resample
-        predictions = predictions.astype('int16')
-        y_gen = y_gen.astype('int16')
+        pred = predictions.astype('int16')
+        tar = y_gen.astype('int16')
 
         # Save Wav files
-        wavfile.write(pred_dir, 44100, predictions)
-        wavfile.write(tar_dir, 44100, y_gen)
+        wavfile.write(pred_dir, 44100, pred[0])
+        wavfile.write(tar_dir, 44100, tar)
+
+    if inference_flag:
+        gen_indxs = N // 2
+        x_gen = cond[gen_indxs]
+        y_gen = sigs[gen_indxs]
+
+        last_pred = y_gen[0]
+        collector = [last_pred]
+
+
+        for i in range(sigs.shape[1]):
+            tar = np.array(collector, dtype='float32')
+            predictions, _ = transformer([tf.constant(x_gen.reshape(1, cond.shape[1], 1), dtype='float32'),
+                                          tf.constant(tar.reshape(1, len(tar), 1), dtype='float32')], training=False)
+            predictions = predictions[:, :, 0]
+            collector.append(predictions[0].numpy()[-1])
+
+        name = 'inference_pred.wav'
+        tar_dir = os.path.normpath(os.path.join(model_save_dir, save_folder, 'WavPredictions', name))
+        tar = np.array(collector, dtype='float32')
+        tar = scaler[0].inverse_transform(tar)
+        tar = y_gen.astype('int16')
+        wavfile.write(tar_dir, 44100, name)
 
     return results
 
@@ -447,7 +471,7 @@ if __name__ == '__main__':
     train_RAMT(
         data_dir=data_dir,
         model_save_dir=r'../../../TrainedModels',
-        save_folder='Transformer_Testing',
+        save_folder='Transformer_Testing_2',
         ckpt_flag=True,
         plot_progress=False,
         loss_type='mse',
@@ -460,5 +484,5 @@ if __name__ == '__main__':
         drop=0.2,
         epochs=1,
         seed=422,
-        generate_wav=10,
-        inference_flag=False)
+        generate_wav=None,
+        inference_flag=True)
