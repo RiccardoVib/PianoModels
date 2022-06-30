@@ -5,6 +5,7 @@ import scipy.fftpack as sf
 import matplotlib.pyplot as plt
 import glob
 from scipy.io import wavfile
+from audio_format import pcm2float
 
 data_dir = '../Files'
 data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort.pickle'])), 'rb')
@@ -49,20 +50,24 @@ sine = np.array(Z['signal'])
 
 
 #---------
-data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'rb')
-Z = pickle.load(data)
-kont = np.array(Z['x_test'])[:, :, 0]
-real = np.array(Z['y_test'])
-
-plt.plot(kont[:,-1].reshape(-1))
-plt.show()
+# data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'rb')
+# Z = pickle.load(data)
+# kont = np.array(Z['x_test'])[:, :, 0]
+# real = np.array(Z['y_test'])
+#
+# plt.plot(kont[:,-1].reshape(-1))
+# plt.show()
 
 data_dir = '../Files'
-file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'LSTM_tar.wav'])))
-
+file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'inference_pred.wav'])))
 for file in file_dirs:
-    fs, audio = wavfile.read(file)
 
-    t = np.linspace(0, len(audio) / fs, num=len(audio))
-    plt.plot(audio)
-    plt.show()
+    fs, audio_pred = wavfile.read(file)
+
+file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'Transf_tar.wav'])))
+for file in file_dirs:
+    fs, audio_tar = wavfile.read(file)
+
+t = np.linspace(0, len(audio_tar) / fs, num=len(audio_tar))
+plt.plot(t, pcm2float(audio_pred[:-1]), t, pcm2float(audio_tar))
+plt.show()

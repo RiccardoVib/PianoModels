@@ -272,7 +272,7 @@ if __name__ == '__main__':
             learning_rate=0.0001,
             encoder_units=[64],
             decoder_units=[64],
-            epochs=2000,
+            epochs=1,
             loss_type='mse',
             generate_wav=None,
             inference=False)

@@ -2,7 +2,7 @@ import tensorflow as tf
 from keras.utils.generic_utils import Progbar
 from tensorflow.keras.optimizers import Adam
 import numpy as np
-from Transformer_2 import Transformer, Schedule, MaskHandler
+from ___Transformer_2 import Transformer, Schedule, MaskHandler
 from tqdm import tqdm
 from GetDataPiano import get_data
 

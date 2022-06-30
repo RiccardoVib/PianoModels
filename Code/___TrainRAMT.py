@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy as np
 import pickle
 from scipy.io import wavfile
-import Transformer
+import __Transformer
 from TrainFunctionality import CustomSchedule, PlotLossesSame
 from tensorflow.keras.utils import Progbar
 import matplotlib.pyplot as plt
@@ -71,16 +71,16 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
         raise ValueError('Please pass opt_type as either Adam or SGD')
 
     opt = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-    transformer = Transformer.Transformer(num_layers=num_layers,
-                                          d_model=d_model,
-                                          num_heads=num_heads,
-                                          dff=dff,  # Hidden layer size of feedforward networks
-                                          input_vocab_size=None,  # Not relevant for ours as we don't use embedding
-                                          target_vocab_size=None,
-                                          pe_input=max_length,  # Max length for positional encoding input
-                                          pe_target=max_length,
-                                          output_dim=output_dim,
-                                          rate=drop)  # Dropout rate
+    transformer = __Transformer.Transformer(num_layers=num_layers,
+                                            d_model=d_model,
+                                            num_heads=num_heads,
+                                            dff=dff,  # Hidden layer size of feedforward networks
+                                            input_vocab_size=None,  # Not relevant for ours as we don't use embedding
+                                            target_vocab_size=None,
+                                            pe_input=max_length,  # Max length for positional encoding input
+                                            pe_target=max_length,
+                                            output_dim=output_dim,
+                                            rate=drop)  # Dropout rate
 
     if loss_type == 'mae':
         loss_fn = tf.keras.losses.MeanAbsoluteError()
