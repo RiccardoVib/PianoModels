@@ -101,7 +101,7 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
     def train_step(inp, tar):
         inp_enc = inp[:, :-1, :]
         inp_dec = inp[:, -1, :]
-        tar_real = inp[:, -1 , :]
+        tar_real = tar[:, -1 , :]
 
         with tf.GradientTape() as tape:
             predictions, _ = transformer([inp_enc, inp_dec], training=True)
@@ -475,5 +475,5 @@ if __name__ == '__main__':
         drop=0.2,
         epochs=1,
         seed=422,
-        generate_wav=None,
+        generate_wav=10,
         inference_flag=False)
