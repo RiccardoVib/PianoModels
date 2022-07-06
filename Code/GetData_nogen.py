@@ -59,10 +59,10 @@ def get_data(data_dir, window, seed=422):
     all_inp, all_tar = [], []
 
     for i in range(n_train):
-        for t in range(signals.shape[1] // window):
-            inp_temp = np.array([sine[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+        for t in range(signals.shape[1] - window):
+            inp_temp = np.array([sine[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
-            tar_temp = np.array(signals[i, t * window:t * window + window])
+            tar_temp = np.array(signals[i, t :t + window])
             all_tar.append(tar_temp.T)
 
     all_inp = np.array(all_inp)
@@ -75,11 +75,11 @@ def get_data(data_dir, window, seed=422):
     all_tar = []
 
     for i in range(n_train, n_train + n_val):
-        for t in range(signals.shape[1] // window):
+        for t in range(signals.shape[1] - window):
             inp_temp = np.array(
-                [sine[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+                [sine[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
-            tar_temp = np.array(signals[i, t * window:t * window + window])
+            tar_temp = np.array(signals[i, t :t + window])
             all_tar.append(tar_temp.T)
 
     all_inp = np.array(all_inp)
@@ -94,9 +94,9 @@ def get_data(data_dir, window, seed=422):
     for i in range(n_train + n_val, N):
         for t in range(signals.shape[1] // window):
             inp_temp = np.array(
-                [sine[i, t * window:t * window + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+                [sine[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
-            tar_temp = np.array(signals[i, t * window:t * window + window])
+            tar_temp = np.array(signals[i, t :t + window])
             all_tar.append(tar_temp.T)
 
     all_inp = np.array(all_inp)

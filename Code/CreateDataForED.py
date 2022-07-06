@@ -36,10 +36,10 @@ def data_create_sins(**kwargs):
         index = index[-1][-1]
         samples = np.linspace(0, index/fs, index, endpoint=False)
 
-        vel = vels[i]/120
-        vel = vel/4
-        sine = vel * np.sin(np.pi * maximumFrequency[0] * samples)
-        sine *= 32767
+        #vel = vels[i]/120
+        #vel = vel/4
+        sine = np.sin(np.pi * maximumFrequency[0] * samples)
+        #sine *= 32767
         #sine *= 1000
         sine = np.pad(sine, (0, signals[i].shape[0] - index))
 
