@@ -79,7 +79,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         out_dim = T
 
     elif not generative:
-        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16.pickle'])), 'wb')
+        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16.pickle'])), 'rb')
         data = pickle.load(file_data)
 
         x = data['x']
