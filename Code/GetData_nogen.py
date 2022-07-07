@@ -3,7 +3,7 @@ import random
 import os
 import numpy as np
 from Preprocess import my_scaler
-
+from audio_format import pcm2float
 
 def get_data(data_dir, window, seed=422):
     np.random.seed(seed)
@@ -29,10 +29,10 @@ def get_data(data_dir, window, seed=422):
     # -----------------------------------------------------------------------------------------------------------------
     # Scale data to be within (0, 1)
     # -----------------------------------------------------------------------------------------------------------------
-    Z = np.array([signals, sine])
+    #Z = np.array([signals, sine])
 
     scaler =  my_scaler(feature_range=(-1, 1))
-    scaler.fit(Z)
+    scaler.fit(signals)
     signals = scaler.transform(signals)
     sine = scaler.transform(sine)
 
@@ -92,7 +92,7 @@ def get_data(data_dir, window, seed=422):
     all_tar = []
 
     for i in range(n_train + n_val, N):
-        for t in range(signals.shape[1] // window):
+        for t in range(signals.shape[1] - window):
             inp_temp = np.array(
                 [sine[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)

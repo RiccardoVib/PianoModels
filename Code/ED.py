@@ -7,7 +7,6 @@ import os
 import time
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from TrainFunctionality import root_mean_squared_error
 from scipy.io import wavfile
 from scipy import signal
 from tensorflow.keras.layers import Input, Dense, LSTM

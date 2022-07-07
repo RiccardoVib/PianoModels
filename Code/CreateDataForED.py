@@ -3,7 +3,7 @@ import os
 import pickle
 import scipy.fftpack as sf
 import matplotlib.pyplot as plt
-
+from audio_format import float2pcm
 
 def data_create_sins(**kwargs):
     data_dir = kwargs.get('data_dir', '../Files')
@@ -56,7 +56,7 @@ def data_create_sins(**kwargs):
         #
         # plt.plot(sine)
         # plt.show()
-        sine = np.int16(sine)
+        sine = float2pcm(sine)
         Notes_collector_sine['signal'].append(sine)
         Notes_collector_sine['note'].append(notes[i])
         Notes_collector_sine['velocity'].append(vels[i])

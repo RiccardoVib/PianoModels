@@ -5,14 +5,14 @@ from Preprocess import positional_encoding
 from tensorflow.keras import layers
 import numpy as np
 import os
-from GetDataTubeTech import get_data, get_test_data
 import pickle
 from scipy.io import wavfile
-from GetDataPiano import get_data
+from Code.GetDataPiano import get_data
 
 class TransformerBlock(layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
         super(TransformerBlock, self).__init__()
+
         self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
         self.ffn = Sequential([layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim),])
         self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
@@ -20,8 +20,18 @@ class TransformerBlock(layers.Layer):
         self.dropout1 = layers.Dropout(rate)
         self.dropout2 = layers.Dropout(rate)
 
-    def call(self, inputs, training):
-        attn_output = self.att(inputs, inputs)
+    def call(self, inputs, training, generative):
+        #https://stackoverflow.com/questions/67805117/multiheadattention-attention-mask-keras-tensorflow-example
+        #embedding = tf.keras.layers.Embedding(input_dim=inputs.shape[1], output_dim=inputs.shape[1], mask_zero=True)
+        #mask = embedding.compute_mask(inputs)
+        #mask = mask[:, tf.newaxis, tf.newaxis, :]
+
+        masking_layer = layers.Masking(mask_value=0.0, input_shape=(inputs.shape[1], inputs.shape[1]))
+
+        attn_output = self.att(inputs, inputs)#, attention_mask=mask)
+        if generative:
+            attn_output = masking_layer(attn_output)
+        #attn_output = self.att(inputs, inputs)
         attn_output = self.dropout1(attn_output, training=training)
         out1 = self.layernorm1(inputs + attn_output)
         ffn_output = self.ffn(out1)
@@ -55,13 +65,14 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         notes = notes.reshape(notes.shape[0])
         vels = vels.reshape(vels.shape[0])
         all_inp = []
-        for sigs.shape[0]:
+        for i in range (sigs.shape[0]):
             inp_temp = np.array([sigs[i, :], np.repeat(notes[i], sigs.shape[1]), np.repeat(vels[i], sigs.shape[1])])
             all_inp.append(inp_temp.T)
 
         all_inp = np.array(all_inp)
-        #N = len(notes)
+        N = len(notes)
         #cond = np.array([notes, vels]).reshape(168, 2)
+        sigs = all_inp
 
         T = sigs.shape[1] - 1  # time window
         D = sigs.shape[2]  # conditioning
@@ -92,7 +103,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
     #inp_dec = tf.keras.layers.Dense(d_model)(inp_dec) #embedding
     outputs_enc = inp_ + positional_encoding_enc
     #outputs_dec = inp_dec + positional_encoding_dec
-    outputs_enc = TransformerBlock(d_model, num_heads, ff_dim)(outputs_enc)
+    outputs_enc = TransformerBlock(d_model, num_heads, ff_dim)(outputs_enc, generative=True)
     outputs_enc = tf.keras.layers.Dense(out_dim, activation='sigmoid')(outputs_enc)
 
     model = Model(inputs=inp_enc, outputs=outputs_enc)
@@ -265,4 +276,4 @@ if __name__ == '__main__':
               loss_type='mse',
               generate_wav=10,
               w_length=16,
-              generative=True)
+              generative=False)
