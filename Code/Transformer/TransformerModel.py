@@ -54,8 +54,8 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
     loss_type = kwargs.get('loss_type', 'mse')
     w_length = kwargs.get('w_length', 16)
     generate_wav = kwargs.get('generate_wav', None)
-
-    generative  = kwargs.get('generative', True)
+    generative = kwargs.get('generative', True)
+    all = kwargs.get('all', True)
 
     if generative:
 
@@ -65,6 +65,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         notes = notes.reshape(notes.shape[0])
         vels = vels.reshape(vels.shape[0])
         all_inp = []
+
         for i in range (sigs.shape[0]):
             inp_temp = np.array([sigs[i, :], np.repeat(notes[i], sigs.shape[1]), np.repeat(vels[i], sigs.shape[1])])
             all_inp.append(inp_temp.T)
@@ -78,7 +79,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         D = sigs.shape[2]  # conditioning
         out_dim = T
 
-    elif not generative:
+    elif not generative and not all:
         file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16.pickle'])), 'rb')
         data = pickle.load(file_data)
 
@@ -93,6 +94,24 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         T = x.shape[1]
         D = x.shape[2]
         out_dim = 1
+    elif not generative and all:
+
+        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_allinp.pickle'])), 'rb')
+        data = pickle.load(file_data)
+
+        x = data['x']
+        y = data['y']
+        x_val = data['x_val']
+        y_val = data['y_val']
+        x_test = data['x_test']
+        y_test = data['y_test']
+        scaler = data['scaler']
+
+        T = x.shape[1]
+        D = x.shape[2]
+        out_dim = T
+    else:
+        raise ValueError('Somethig wrong')
 
     #inputs layers
     inp_enc = tf.keras.Input(shape=(T, D))
@@ -150,9 +169,14 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         results = model.fit(sigs[:N//2, :-1, :], sigs[:N//2, 1:, 0], batch_size=b_size, epochs=epochs, verbose=0,
                         validation_data=(sigs[N//2+1:(2*N)//3, :-1, :], sigs[N//2+1:(2*N)//3, 1:, 0]),
                         callbacks=callbacks)
-    elif not generative:
+    elif not generative and not all:
         results = model.fit(x, y[:, -1], batch_size=b_size, epochs=epochs, verbose=0,
                         validation_data=(x_val, y_val[:, -1]),
+                        callbacks=callbacks)
+
+    elif not generative and all:
+        results = model.fit(x, y, batch_size=b_size, epochs=epochs, verbose=0,
+                        validation_data=(x_val, y_val),
                         callbacks=callbacks)
 
     results = {
@@ -276,4 +300,5 @@ if __name__ == '__main__':
               loss_type='mse',
               generate_wav=10,
               w_length=16,
-              generative=False)
+              generative=False,
+              all=True)
