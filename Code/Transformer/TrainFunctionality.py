@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import copy
+from keras import backend as K
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
@@ -19,6 +20,27 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
+def ESR_loss_function(y_true, y_pred):
+    return tf.divide(K.sum(K.square(y_pred - y_true)), K.sum(K.square(y_true)))
+
+def FFT_loss_function(y_true, y_pred):
+    Y_true = tf.signal.rfft(tf.reshape(y_true, [-1]))
+    Y_pred = tf.signal.rfft(tf.reshape(y_pred, [-1]))
+    return tf.keras.metrics.mean_absolute_error(tf.math.real(Y_true), tf.math.real(Y_pred))
+
+def STFT_loss_function(y_true, y_pred):
+    Y_true = tf.math.real(tf.signal.stft(tf.reshape(y_true, [-1]), 512, 512))
+    #Y_true = tf.math.log(tf.math.pow(Y_true, 2))
+    Y_true = tf.math.pow(Y_true, 2)
+
+    Y_pred = tf.math.real(tf.signal.stft(tf.reshape(y_pred, [-1]), 512, 512))
+    #Y_pred = tf.math.log(tf.math.pow(Y_pred, 2))
+    Y_pred = tf.math.pow(Y_pred, 2)
+
+    return tf.keras.metrics.mean_squared_error(Y_true, Y_pred)
+
+def combinedLoss(y_true, y_pred):
+    return ESR_loss_function(y_true, y_pred) + tf.keras.metrics.mean_squared_error(y_true, y_pred)
 
 def loss_function(real, pred, loss_object):
     mask = tf.math.logical_not(tf.math.equal(real, 0))

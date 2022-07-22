@@ -7,7 +7,9 @@ import numpy as np
 import os
 import pickle
 from scipy.io import wavfile
-from Code.GetDataPiano import get_data
+from GetDataPiano import get_data
+
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 class TransformerBlock(layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
@@ -296,7 +298,7 @@ if __name__ == '__main__':
               d_model=512,
               ff_dim=512,
               num_heads=8,
-              epochs=1,
+              epochs=200,
               loss_type='mse',
               generate_wav=10,
               w_length=16,
