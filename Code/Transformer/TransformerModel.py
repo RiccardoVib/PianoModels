@@ -8,6 +8,7 @@ import os
 import pickle
 from scipy.io import wavfile
 from GetDataPiano import get_data
+from TrainFunctionality import combinedLoss
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
@@ -131,7 +132,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
     model.summary()
 
     opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(loss='mse', metrics=['mse'], optimizer=opt)
+    model.compile(loss=combinedLoss, metrics=combinedLoss, optimizer=opt)
 
     callbacks = []
     if ckpt_flag:
