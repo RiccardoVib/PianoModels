@@ -69,7 +69,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         vels = vels.reshape(vels.shape[0])
         all_inp = []
 
-        for i in range (sigs.shape[0]):
+        for i in range(sigs.shape[0]):
             inp_temp = np.array([sigs[i, :], np.repeat(notes[i], sigs.shape[1]), np.repeat(vels[i], sigs.shape[1])])
             all_inp.append(inp_temp.T)
 
@@ -83,7 +83,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         out_dim = T
 
     elif not generative and not all:
-        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16.pickle'])), 'rb')
+        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'rb')
         data = pickle.load(file_data)
 
         x = data['x']
@@ -132,7 +132,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
     model.summary()
 
     opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(loss=combinedLoss, metrics=combinedLoss, optimizer=opt)
+    model.compile(loss=['mse'], metrics=['mse'], optimizer=opt)
 
     callbacks = []
     if ckpt_flag:
@@ -169,8 +169,14 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
 
     # train
     if generative:
-        results = model.fit(sigs[:N//2, :-1, :], sigs[:N//2, 1:, 0], batch_size=b_size, epochs=epochs, verbose=0,
-                        validation_data=(sigs[N//2+1:(2*N)//3, :-1, :], sigs[N//2+1:(2*N)//3, 1:, 0]),
+        #results = model.fit(sigs[:N//2, :-1, :], sigs[:N//2, 1:, 0], batch_size=b_size, epochs=epochs, verbose=0,
+                        #validation_data = (sigs[N // 2 + 1:(2 * N) // 3, :-1, :], sigs[N // 2 + 1:(2 * N) // 3, 1:, 0]),
+                        #callbacks = callbacks)
+        for e in range(epochs):
+            for i in range(N//2):
+
+                results = model.fit(sigs[i:i+1, :-1, :], sigs[i:i+1, 1:, 0], batch_size=b_size, epochs=1, verbose=0,
+                        validation_data=(sigs[N//2+i:N//2+i+1, :-1, :], sigs[N//2+i:N//2+i+1, 1:, 0]),
                         callbacks=callbacks)
     elif not generative and not all:
         results = model.fit(x, y[:, -1], batch_size=b_size, epochs=epochs, verbose=0,
@@ -182,7 +188,16 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
                         validation_data=(x_val, y_val),
                         callbacks=callbacks)
 
+    if generative:
+        #test_loss = model.evaluate(sigs[(2*N)//3+1:, :-1, :], sigs[(2*N)//3+1:, 1:, 0], batch_size=b_size, verbose=0)
+        test_loss = model.evaluate(sigs[N-2:N-1, :-1, :], sigs[N-2:N-1, 1:, 0], batch_size=b_size, verbose=0)
+    elif not generative:
+        test_loss = model.evaluate(x_test, y_test[:, -1], batch_size=b_size, verbose=0)
+
+    print('Test Loss: ', test_loss)
+
     results = {
+        'Test_Loss': test_loss,
         'Min_val_loss': np.min(results.history['val_loss']),
         'Min_train_loss': np.min(results.history['loss']),
         'b_size': b_size,
@@ -194,18 +209,18 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         'ff_dim': ff_dim,
         'num_heads': num_heads,
         'w_length': w_length,
-        #'Train_loss': results.history['loss'],
+        # 'Train_loss': results.history['loss']
         'Val_loss': results.history['val_loss']
         }
     # print(results)
     if ckpt_flag:
         with open(os.path.normpath(
-                '/'.join([model_save_dir, save_folder, 'results_it_' + str(n_iteration) + '.txt'])), 'w') as f:
+                '/'.join([model_save_dir, save_folder, 'result.txt'])), 'w') as f:
             for key, value in results.items():
                 print('\n', key, '  : ', value, file=f)
             pickle.dump(results,
                         open(os.path.normpath(
-                            '/'.join([model_save_dir, save_folder, 'results_it_' + str(n_iteration) + '.pkl'])),
+                            '/'.join([model_save_dir, save_folder, 'results.pkl'])),
                                 'wb'))
 
 
@@ -215,26 +230,21 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
             print("Restored weights from {}".format(ckpt_dir))
             model.load_weights(best)
 
-    if generative:
-        test_loss = model.evaluate(sigs[(2*N)//3+1:, :-1, :], sigs[(2*N)//3+1:, 1:, 0], batch_size=b_size, verbose=0)
-    elif not generative:
-        test_loss = model.evaluate(x_test, y_test[:, -1], batch_size=b_size, verbose=0)
 
-    print('Test Loss: ', test_loss)
 
 
     if generate_wav is not None:
 
         if generative:
-            predictions = model.predict(sigs[(2*N)//3+1:, :-1, :], batch_size=b_size)
+            predictions = model.predict(sigs[N-2:N-1, :-1, :], batch_size=b_size)
             predictions = scaler[0].inverse_transform(predictions)
-            y_test = scaler[0].inverse_transform(sigs[(2*N)//3+1:, 1:, 0])
+            y_test = scaler[0].inverse_transform(sigs[N-2:N-1, 1:, 0])
 
         if not generative:
             predictions = model.predict(x_test, batch_size=b_size)
             predictions = (scaler[0].inverse_transform(predictions)).reshape(-1)
             x_test = (scaler[0].inverse_transform(x_test[:, :, 0])).reshape(-1)
-            y_test = (scaler[0].inverse_transform(y_test[:, -1])).reshape(-1)
+            y_test = (scaler[0].inverse_transform(y_test)).reshape(-1)
             x_test = x_test.astype('int16')
 
             inp_name = '_inp.wav'
@@ -256,32 +266,8 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         # Save Wav files
         predictions = predictions.astype('int16')
         y_test = y_test.astype('int16')
-        wavfile.write(pred_dir, 44100, predictions)
-        wavfile.write(tar_dir, 44100, y_test)
-
-    results = {
-        'Test_Loss': test_loss,
-        'Min_val_loss': np.min(results.history['val_loss']),
-        'Min_train_loss': np.min(results.history['loss']),
-        'b_size': b_size,
-        'learning_rate': learning_rate,
-        'drop': drop,
-        'opt_type': opt_type,
-        'loss_type': loss_type,
-        'd_model': d_model,
-        'ff_dim': ff_dim,
-        'num_heads': num_heads,
-        'w_length': w_length,
-        # 'Train_loss': results.history['loss'],
-        'Val_loss': results.history['val_loss']
-    }
-    print(results)
-
-    if ckpt_flag:
-        with open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.txt'])), 'w') as f:
-            for key, value in results.items():
-                print('\n', key, '  : ', value, file=f)
-            pickle.dump(results, open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.pkl'])), 'wb'))
+        wavfile.write(pred_dir, 44100, predictions[0,:,0].T)
+        wavfile.write(tar_dir, 44100, y_test.T)
 
     return results
 
@@ -292,16 +278,16 @@ if __name__ == '__main__':
     #start = time.time()
     trainMultiAttention(data_dir=data_dir,
               model_save_dir='../../TrainedModels',
-              save_folder='MultiAttention',
+              save_folder='MultiAttention_gen',
               ckpt_flag=True,
               b_size=128,
               learning_rate=0.001,
-              d_model=512,
-              ff_dim=512,
-              num_heads=8,
-              epochs=200,
+              d_model=64,
+              ff_dim=64,
+              num_heads=4,
+              epochs=1,
               loss_type='mse',
               generate_wav=10,
               w_length=16,
-              generative=False,
-              all=True)
+              generative=True,
+              all=False)
