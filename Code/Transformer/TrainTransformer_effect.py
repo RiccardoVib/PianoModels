@@ -179,8 +179,8 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
             x_ = x_test[0]
             y_ = y_test[0]
             # Need to make a single prediction for the model as it needs to compile:
-            transformer([tf.constant(x_[:, :-1, :].reshape(1, T-1, D), dtype='float32'),
-                         tf.constant(x_[:, -1, :].reshape(1, 1, D), dtype='float32')],
+            transformer([tf.constant(x_[:-1, :].reshape(1, T-1, D), dtype='float32'),
+                         tf.constant(x_[-1, :].reshape(1, 1, D), dtype='float32')],
                         training=False)
 
             for i in range(len(transformer.variables)):
@@ -423,14 +423,23 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
         gen_indxs = 0  # np.random.choice(N, generate_wav)
         x_gen = x_test[gen_indxs].reshape(1, T, D)
         y_gen = y_test[gen_indxs].reshape(1, T, 1)
-        predictions, _ = transformer([
-            tf.constant(x_gen[:, :-1, :].reshape(1, T-1, D), dtype='float32'),
-            tf.constant(x_gen[:, -1, :].reshape(1, 1, D), dtype='float32')],
-            training=False)
-        predictions = predictions[:, :, 0].numpy()
+
+        predictions = []
+        x_gen = x_test
+        y_gen = x_test
+        for i in range(x_test.shape[0]):
+            prediction, _ = transformer([
+                tf.constant(x_gen[i, :-1, :].reshape(1, T-1, D), dtype='float32'),
+                tf.constant(x_gen[i, -1, :].reshape(1, 1, D), dtype='float32')],
+                training=False)
+
+            prediction = prediction[:, :, 0].numpy()
+            predictions.append(prediction)
+
+        predictions = np.array(predictions).reshape(-1)
         predictions = scaler[0].inverse_transform(predictions.T)
 
-        y_gen = scaler[0].inverse_transform(y_gen)
+        y_gen = scaler[0].inverse_transform(y_gen).reshape(-1)
 
         pred_name = 'Transf_pred.wav'
         tar_name = 'Transf_tar.wav'
@@ -475,5 +484,5 @@ if __name__ == '__main__':
         drop=0.2,
         epochs=1,
         seed=422,
-        generate_wav=10,
+        generate_wav=1,
         inference_flag=False)
