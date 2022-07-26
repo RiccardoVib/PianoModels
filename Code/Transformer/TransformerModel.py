@@ -266,7 +266,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         # Save Wav files
         predictions = predictions.astype('int16')
         y_test = y_test.astype('int16')
-        wavfile.write(pred_dir, 44100, predictions[0,:,0].T)
+        wavfile.write(pred_dir, 44100, predictions[0][0].T)
         wavfile.write(tar_dir, 44100, y_test.T)
 
     return results
@@ -278,14 +278,14 @@ if __name__ == '__main__':
     #start = time.time()
     trainMultiAttention(data_dir=data_dir,
               model_save_dir='../../TrainedModels',
-              save_folder='MultiAttention_gen',
+              save_folder='MultiAttention_gen2',
               ckpt_flag=True,
               b_size=128,
               learning_rate=0.001,
-              d_model=64,
-              ff_dim=64,
-              num_heads=4,
-              epochs=1,
+              d_model=512,
+              ff_dim=512,
+              num_heads=8,
+              epochs=100,
               loss_type='mse',
               generate_wav=10,
               w_length=16,
