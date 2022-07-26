@@ -115,6 +115,6 @@ if __name__ == '__main__':
 
     data = {'x': x, 'y': y, 'x_val': x_val, 'y_val': y_val, 'x_test': x_test, 'y_test': y_test , 'scaler': scaler}
 
-    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'wb')
+    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16_kont.pickle'])), 'wb')
     pickle.dump(data, file_data)
     file_data.close()
