@@ -72,17 +72,17 @@ data_dir = '../Files'
 # plt.plot(t, pcm2float(audio_pred[:-1]), t, pcm2float(audio_tar))
 # plt.show()
 
-file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'TransformerModelGen_tar.wav'])))
+file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'TransformerModelGen_tar1.wav'])))
 for file in file_dirs:
     fs, audio_tar = wavfile.read(file)
 
 
-file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'TransformerModelGen_pred.wav'])))
+file_dirs = glob.glob(os.path.normpath('/'.join([data_dir, 'TransformerModelGen_pred1.wav'])))
 for file in file_dirs:
 
     fs, audio_pred = wavfile.read(file)
 
 
 t = np.linspace(0, len(audio_tar) / fs, num=len(audio_tar))
-plt.plot(t, pcm2float(audio_pred[:-1]), t, pcm2float(audio_tar))
+plt.plot(t, pcm2float(audio_pred), t, pcm2float(audio_tar))
 plt.show()

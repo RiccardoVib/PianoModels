@@ -40,7 +40,7 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
     dff = kwargs.get('dff', 512)
     num_heads = kwargs.get('num_heads', 8)
     drop = kwargs.get('drop', .2)
-
+    inferece = kwargs.get('inference', False)
     inference_flag = kwargs.get('inference_flag', False)
     device_num = kwargs.get('device_num', None)
     loss_type = kwargs.get('loss_type', 'thres_log')
@@ -373,48 +373,48 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
         epoch = 0
 
     # Get batches
+    if not inference:
+        for batch_num in range(x_test.shape[0]):
+            x_batch = x_test[batch_num].reshape(1, T, D)
+            y_batch = y_test[batch_num].reshape(1, T, 1)
 
-    for batch_num in range(x_test.shape[0]):
-        x_batch = x_test[batch_num].reshape(1, T, D)
-        y_batch = y_test[batch_num].reshape(1, T, 1)
+            x_batch = tf.constant(x_batch, dtype='float32')
+            y_batch = tf.constant(y_batch, dtype='float32')
 
-        x_batch = tf.constant(x_batch, dtype='float32')
-        y_batch = tf.constant(y_batch, dtype='float32')
+            val_step(inp=x_batch, tar=y_batch, testing=True)
 
-        val_step(inp=x_batch, tar=y_batch, testing=True)
+        print('\n\nTest Loss: ', test_loss.result().numpy())
+        #print('    MAE:   ', test_loss_mae.result().numpy())
+        #print('    MSE:   ', test_loss_mse.result().numpy(), '\n\n')
 
-    print('\n\nTest Loss: ', test_loss.result().numpy())
-    #print('    MAE:   ', test_loss_mae.result().numpy())
-    #print('    MSE:   ', test_loss_mse.result().numpy(), '\n\n')
-
-    results = {
-        'Test_Loss': test_loss.result().numpy(),
-        #'Test_Loss_MAE': test_loss_mae.result().numpy(),
-        #'Test_Loss_MSE': test_loss_mse.result().numpy(),
-        'b_size': b_size,
-        'loss_type': loss_type,
-        'num_layers': num_layers,
-        'd_model': d_model,
-        'dff': dff,
-        'num_heads': num_heads,
-        'drop': drop,
-        'n_params': n_params,
-        'learning_rate': learning_rate if isinstance(learning_rate, float) else 'Sched',
-        'min_val_loss': np.min(_logs[1]),
-        #'min_val_MAE': np.min(_logs[2]),
-        #'min_val_MSE': np.min(_logs[3]),
-        'min_train_loss': np.min(_logs[0]),
-        'val_loss': _logs[1],
-        #'val_loss_mae': _logs[2],
-        #'val_loss_mse': _logs[3],
-        'train_loss': _logs[0],
-    }
-
-    if ckpt_flag and not inference_flag:
-        with open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.txt'])), 'w') as f:
-            for key, value in results.items():
-                print('\n', key, '  : ', value, file=f)
-            pickle.dump(results, open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.pkl'])), 'wb'))
+        results = {
+            'Test_Loss': test_loss.result().numpy(),
+            #'Test_Loss_MAE': test_loss_mae.result().numpy(),
+            #'Test_Loss_MSE': test_loss_mse.result().numpy(),
+            'b_size': b_size,
+            'loss_type': loss_type,
+            'num_layers': num_layers,
+            'd_model': d_model,
+            'dff': dff,
+            'num_heads': num_heads,
+            'drop': drop,
+            'n_params': n_params,
+            'learning_rate': learning_rate if isinstance(learning_rate, float) else 'Sched',
+            'min_val_loss': np.min(_logs[1]),
+            #'min_val_MAE': np.min(_logs[2]),
+            #'min_val_MSE': np.min(_logs[3]),
+            'min_train_loss': np.min(_logs[0]),
+            'val_loss': _logs[1],
+            #'val_loss_mae': _logs[2],
+            #'val_loss_mse': _logs[3],
+            'train_loss': _logs[0],
+        }
+        print(results)
+        if ckpt_flag and not inference_flag:
+            with open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.txt'])), 'w') as f:
+                for key, value in results.items():
+                    print('\n', key, '  : ', value, file=f)
+                pickle.dump(results, open(os.path.normpath('/'.join([model_save_dir, save_folder, 'results.pkl'])), 'wb'))
 
     # -----------------------------------------------------------------------------------------------------------------
     # Save some Wav-file Predictions (from test set):
@@ -456,7 +456,7 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
         tar = y_gen.astype('int16')
 
         # Save Wav files
-        wavfile.write(pred_dir, 44100, pred[0])
+        wavfile.write(pred_dir, 44100, pred)
         wavfile.write(tar_dir, 44100, tar)
 
     return results
@@ -472,7 +472,7 @@ if __name__ == '__main__':
         data_dir=data_dir,
         data=data,
         model_save_dir=r'../../../TrainedModels',
-        save_folder='Transformer_Testing_effect',
+        save_folder='Transformer_Testing_effect_',
         ckpt_flag=True,
         plot_progress=False,
         loss_type='mse',
@@ -486,4 +486,7 @@ if __name__ == '__main__':
         epochs=1,
         seed=422,
         generate_wav=1,
-        inference_flag=False)
+        inference_flag=False,
+        inferece=True)
+
+    #Test Loss: 0.01712128
