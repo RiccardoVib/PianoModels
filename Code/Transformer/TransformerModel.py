@@ -83,7 +83,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         out_dim = T
 
     elif not generative and not all:
-        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'rb')
+        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16_sines.pickle'])), 'rb')
         data = pickle.load(file_data)
 
         x = data['x']
@@ -99,7 +99,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         out_dim = 1
     elif not generative and all:
 
-        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_allinp.pickle'])), 'rb')
+        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_allinp_sines.pickle'])), 'rb')
         data = pickle.load(file_data)
 
         x = data['x']

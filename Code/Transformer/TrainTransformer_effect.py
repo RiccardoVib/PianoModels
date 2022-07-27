@@ -465,7 +465,7 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
 if __name__ == '__main__':
     data_dir = '../../Files'
     # file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16.pickle'])), 'rb')
-    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'rb')
+    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16_sines.pickle'])), 'rb')
     data = pickle.load(file_data)
 
     train_RAMT(
