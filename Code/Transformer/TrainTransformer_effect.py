@@ -433,7 +433,7 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
                 tf.constant(x_gen[i, :-1, :].reshape(1, T-1, D), dtype='float32'),
                 tf.constant(x_gen[i, -1, :].reshape(1, 1, D), dtype='float32')],
                 training=False)
-
+#
             prediction = prediction[:, :, 0].numpy()
             predictions.append(prediction)
 
