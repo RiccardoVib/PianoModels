@@ -28,7 +28,7 @@ class TransformerBlock(layers.Layer):
         #embedding = tf.keras.layers.Embedding(input_dim=inputs.shape[1], output_dim=inputs.shape[1], mask_zero=True)
         #mask = embedding.compute_mask(inputs)
         #mask = mask[:, tf.newaxis, tf.newaxis, :]
-
+        #
         masking_layer = layers.Masking(mask_value=0.0, input_shape=(inputs.shape[1], inputs.shape[1]))
         #masked_att = Attention(casual=True, dropout=0.5)
         attn_output = self.att(inputs, inputs)#, attention_mask=mask)
