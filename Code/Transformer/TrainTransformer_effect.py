@@ -428,19 +428,20 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
         predictions = []
         x_gen = x_test
         y_gen = x_test
-        for i in range(x_test.shape[0]):
+        r_ = x_test.shape[0] // 8
+        for i in range(r_):
             prediction, _ = transformer([
                 tf.constant(x_gen[i, :-1, :].reshape(1, T-1, D), dtype='float32'),
                 tf.constant(x_gen[i, -1, :].reshape(1, 1, D), dtype='float32')],
                 training=False)
-#
-            prediction = prediction[:, :, 0].numpy()
+
+            prediction = prediction[0, 0, 0].numpy()
             predictions.append(prediction)
 
         predictions = np.array(predictions).reshape(-1)
         predictions = scaler[0].inverse_transform(predictions.T)
 
-        y_gen = scaler[0].inverse_transform(y_gen).reshape(-1)
+        y_gen = scaler[0].inverse_transform(y_gen[:r_, -1, 0]).reshape(-1)
 
         pred_name = 'Transf_pred.wav'
         tar_name = 'Transf_tar.wav'
@@ -465,7 +466,7 @@ def train_RAMT(data_dir, epochs, seed=422, data=None, **kwargs):
 if __name__ == '__main__':
     data_dir = '../../Files'
     # file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16.pickle'])), 'rb')
-    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16_sines.pickle'])), 'rb')
+    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16.pickle'])), 'rb')
     data = pickle.load(file_data)
 
     train_RAMT(
