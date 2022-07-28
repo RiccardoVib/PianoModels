@@ -71,7 +71,7 @@ def data_create_saws(**kwargs):
         Notes_collector_saw['note'].append(notes[i])
         Notes_collector_saw['velocity'].append(vels[i])
 
-    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort_saw.pickle'])), 'wb')
+    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetSuperShort_saw.pickle'])), 'wb')
     pickle.dump(Notes_collector_saw, file_data)
     file_data.close()
 

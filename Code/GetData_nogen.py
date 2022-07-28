@@ -13,14 +13,14 @@ def get_data(data_dir, window, seed=422):
     # -----------------------------------------------------------------------------------------------------------------
     # Load data
     # -----------------------------------------------------------------------------------------------------------------
-    data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort.pickle'])), 'rb')
+    data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetSuperShort.pickle'])), 'rb')
 
     Z = pickle.load(data)
     signals = np.array(Z['signal'])
     notes = np.array(Z['note'])
     vels = np.array(Z['velocity'])
 
-    data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort_Sines.pickle'])), 'rb')
+    data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetSuperShort_saw.pickle'])), 'rb')
 
     Z = pickle.load(data)
     sine = np.array(Z['signal'])
