@@ -23,7 +23,7 @@ def get_data(data_dir, window, seed=422):
     data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetSuperShort_saw.pickle'])), 'rb')
 
     Z = pickle.load(data)
-    sine = np.array(Z['signal'])
+    saw = np.array(Z['signal'])
 
     del Z
     # -----------------------------------------------------------------------------------------------------------------
@@ -32,9 +32,9 @@ def get_data(data_dir, window, seed=422):
     #Z = np.array([signals, sine])
 
     scaler =  my_scaler(feature_range=(-1, 1))
-    scaler.fit(signals)
+    scaler.fit(np.array([signals, saw]))
     signals = scaler.transform(signals)
-    sine = scaler.transform(sine)
+    saw = scaler.transform(saw)
 
     scaler_note = my_scaler()
     scaler_note.fit(notes)
@@ -55,12 +55,11 @@ def get_data(data_dir, window, seed=422):
     n_train = N // 100 * 70
     n_val = (N - n_train) // 2
 
-    x, y, x_val, y_val, x_test, y_test = [], [], [], [], [], []
     all_inp, all_tar = [], []
 
     for i in range(n_train):
         for t in range(signals.shape[1] - window):
-            inp_temp = np.array([sine[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+            inp_temp = np.array([saw[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
             tar_temp = np.array(signals[i, t :t + window])
             all_tar.append(tar_temp.T)
@@ -77,7 +76,7 @@ def get_data(data_dir, window, seed=422):
     for i in range(n_train, n_train + n_val):
         for t in range(signals.shape[1] - window):
             inp_temp = np.array(
-                [sine[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+                [saw[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
             tar_temp = np.array(signals[i, t :t + window])
             all_tar.append(tar_temp.T)
@@ -94,7 +93,7 @@ def get_data(data_dir, window, seed=422):
     for i in range(n_train + n_val, N):
         for t in range(signals.shape[1] - window):
             inp_temp = np.array(
-                [sine[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
+                [saw[i, t :t + window], np.repeat(notes[i], window), np.repeat(vels[i], window)])
             all_inp.append(inp_temp.T)
             tar_temp = np.array(signals[i, t :t + window])
             all_tar.append(tar_temp.T)
@@ -115,6 +114,6 @@ if __name__ == '__main__':
 
     data = {'x': x, 'y': y, 'x_val': x_val, 'y_val': y_val, 'x_test': x_test, 'y_test': y_test , 'scaler': scaler}
 
-    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16_sines.pickle'])), 'wb')
+    file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetSuperShortPrepared_16_saw.pickle'])), 'wb')
     pickle.dump(data, file_data)
     file_data.close()
