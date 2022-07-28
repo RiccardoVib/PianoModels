@@ -83,7 +83,7 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         out_dim = T
 
     elif not generative and not all:
-        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesSuperShortDatasetPrepared_16_sines.pickle'])), 'rb')
+        file_data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetPrepared_16_sines.pickle'])), 'rb')
         data = pickle.load(file_data)
 
         x = data['x']
@@ -266,8 +266,12 @@ def trainMultiAttention(data_dir, epochs, seed=422, **kwargs):
         # Save Wav files
         predictions = predictions.astype('int16')
         y_test = y_test.astype('int16')
-        wavfile.write(pred_dir, 44100, predictions[0][0].T)
-        wavfile.write(tar_dir, 44100, y_test.T)
+        if generative:
+            wavfile.write(pred_dir, 44100, predictions[0][0].T)
+            wavfile.write(tar_dir, 44100, y_test.T)
+        else:
+            wavfile.write(pred_dir, 44100, predictions)
+            wavfile.write(tar_dir, 44100, y_test)
 
     return results
 
@@ -278,14 +282,14 @@ if __name__ == '__main__':
     #start = time.time()
     trainMultiAttention(data_dir=data_dir,
               model_save_dir='../../TrainedModels',
-              save_folder='MultiAttention_gen2',
+              save_folder='MultiAttention_gen3',
               ckpt_flag=True,
               b_size=128,
               learning_rate=0.001,
               d_model=512,
               ff_dim=512,
               num_heads=8,
-              epochs=100,
+              epochs=1,
               loss_type='mse',
               generate_wav=10,
               w_length=16,
