@@ -31,6 +31,7 @@ def get_data(data_dir, window, seed=422):
     # -----------------------------------------------------------------------------------------------------------------
     #Z = np.array([signals, sine])
 
+    signals = pcm2float(signals)
     scaler =  my_scaler(feature_range=(-1, 1))
     scaler.fit(np.array([signals, saw]))
     signals = scaler.transform(signals)

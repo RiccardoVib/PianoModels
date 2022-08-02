@@ -40,7 +40,7 @@ def data_create_saws(**kwargs):
         index = index[-1][-1]
         t = np.linspace(0, M/fs, index, endpoint=False)
 
-        vel = 1#vels[i]/(10*127)
+        vel = vels[i]/(8*127)
 
         saw = vel*sawtooth(2*np.pi * maximumFrequency[0] * t)
 
@@ -62,10 +62,10 @@ def data_create_saws(**kwargs):
         #saw = float2pcm(saw)
         signal = pcm2float(signals[i])
 
-        # plt.plot(saw)
+        #plt.plot(saw)
         # #plt.plot(window)
-        # plt.plot(signal)
-        # plt.show()
+        #plt.plot(signal)
+        #plt.show()
 
         Notes_collector_saw['signal'].append(saw)
         Notes_collector_saw['note'].append(notes[i])

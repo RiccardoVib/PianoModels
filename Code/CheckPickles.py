@@ -12,6 +12,12 @@ from mag_smoothing import mag_smoothing
 
 
 data_dir = '../Files'
+data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetSuperShortPrepared_16_saw.pickle'])), 'rb')
+Z = pickle.load(data)
+x = Z['x']
+plt.plot(x[0])
+plt.show()
+
 # data = open(os.path.normpath('/'.join([data_dir, 'NotesDatasetShort.pickle'])), 'rb')
 # fs = 44100
 #
